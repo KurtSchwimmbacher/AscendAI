@@ -8,25 +8,47 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { AuthService } from '../../services/authService';
 
 export default function LandingScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (isLogin) {
-      // Handle login logic
-      console.log('Login:', { email, password });
-    } else {
-      // Handle signup logic
-      if (password !== confirmPassword) {
-        alert('Passwords do not match');
-        return;
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (!isLogin && password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        await AuthService.signIn(email, password);
+        // Navigation will be handled automatically by the auth state listener
+      } else {
+        await AuthService.signUp(email, password);
+        // Navigation will be handled automatically by the auth state listener
       }
-      console.log('Signup:', { email, password });
+    } catch (error) {
+      let message = 'An unknown error occurred';
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      Alert.alert('Error', message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -74,10 +96,18 @@ export default function LandingScreen() {
               />
             )}
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>
-                {isLogin ? 'Sign In' : 'Sign Up'}
-              </Text>
+            <TouchableOpacity 
+              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isLogin ? 'Sign In' : 'Sign Up'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -164,6 +194,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
   },
   toggleContainer: {
     flexDirection: 'row',

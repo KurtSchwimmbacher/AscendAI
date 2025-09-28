@@ -1,8 +1,8 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
+  signOut as firebaseSignOut,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
   User,
   AuthError,
 } from 'firebase/auth';
@@ -33,7 +33,7 @@ export class AuthService {
   // Sign out the current user
   static async signOut(): Promise<void> {
     try {
-      await signOut(auth);
+      await firebaseSignOut(auth);
     } catch (error) {
       throw this.handleAuthError(error as AuthError);
     }
@@ -46,7 +46,7 @@ export class AuthService {
 
   // Listen to authentication state changes
   static onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    return onAuthStateChanged(auth, callback);
+    return firebaseOnAuthStateChanged(auth, callback);
   }
 
   // Handle Firebase authentication errors
