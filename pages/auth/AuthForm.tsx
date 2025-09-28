@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { AuthService } from '../../services/authService';
+import { globalStyles, colors } from '../../styles/globalStyles';
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
@@ -57,29 +58,30 @@ export default function AuthForm({ mode, onBack }: AuthFormProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={globalStyles.container}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        style={globalStyles.container}
       >
-        <View style={styles.content}>
+        <View style={globalStyles.content}>
           {/* Back button */}
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={[globalStyles.textBody, globalStyles.textPrimary]}>← Back</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>
+          <Text style={[globalStyles.textTitleLarge, globalStyles.textPrimary]}>
             {mode === 'login' ? 'Welcome Back' : 'Create Account'}
           </Text>
           
-          <Text style={styles.subtitle}>
+          <Text style={[globalStyles.textSubheadingSmall, globalStyles.textSecondary]}>
             {mode === 'login' ? 'Sign in to your account' : 'Sign up to get started'}
           </Text>
 
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[globalStyles.input, styles.inputSpacing]}
               placeholder="Email"
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -88,8 +90,9 @@ export default function AuthForm({ mode, onBack }: AuthFormProps) {
             />
             
             <TextInput
-              style={styles.input}
+              style={[globalStyles.input, styles.inputSpacing]}
               placeholder="Password"
+              placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -97,8 +100,9 @@ export default function AuthForm({ mode, onBack }: AuthFormProps) {
             
             {mode === 'signup' && (
               <TextInput
-                style={styles.input}
+                style={[globalStyles.input, styles.inputSpacing]}
                 placeholder="Confirm Password"
+                placeholderTextColor={colors.textMuted}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -106,14 +110,14 @@ export default function AuthForm({ mode, onBack }: AuthFormProps) {
             )}
 
             <TouchableOpacity 
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+              style={[globalStyles.buttonFullWidth, styles.submitButton, isLoading && styles.submitButtonDisabled]} 
               onPress={handleSubmit}
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={styles.submitButtonText}>
+                <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>
                   {mode === 'login' ? 'Sign In' : 'Sign Up'}
                 </Text>
               )}
@@ -126,78 +130,18 @@ export default function AuthForm({ mode, onBack }: AuthFormProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 30,
   },
-  backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
-  },
   form: {
     flex: 1,
   },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e1e5e9',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
+  inputSpacing: {
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#007AFF',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   submitButtonDisabled: {
     opacity: 0.7,
