@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Import screens
-import LandingScreen from '../pages/auth/landing';
+import AuthFlow from '../pages/auth/AuthFlow';
 import HomeScreen from '../pages/HomeScreen';
 
 // Import auth service
@@ -43,8 +43,8 @@ export default function AppNavigator() {
           // User is authenticated - show main app
           <Stack.Screen name="Home" component={HomeScreen} />
         ) : (
-          // User is not authenticated - show auth screen
-          <Stack.Screen name="Auth" component={LandingScreen} />
+          // User is not authenticated - show auth flow
+          <Stack.Screen name="Auth" component={AuthFlow} />
         )}
       </Stack.Navigator>
     </NavigationContainer>
