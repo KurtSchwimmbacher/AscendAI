@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors } from '../../styles/globalStyles';
 import KeyboardAwareButton from '../../components/KeyboardAwareButton';
 

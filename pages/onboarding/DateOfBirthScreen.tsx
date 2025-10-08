@@ -4,11 +4,11 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors } from '../../styles/globalStyles';
 import KeyboardAwareButton from '../../components/KeyboardAwareButton';
 
@@ -146,12 +146,6 @@ export default function DateOfBirthScreen({
           </View>
         </View>
 
-        {/* Floating action button */}
-        <KeyboardAwareButton
-          onPress={handleNext}
-          disabled={!isValid}
-          icon="→"
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
