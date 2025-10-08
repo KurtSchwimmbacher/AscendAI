@@ -33,7 +33,7 @@ export default function AppNavigator() {
           setNeedsOnboarding(!isOnboardingComplete);
         } catch (error) {
           console.error('Error checking onboarding status:', error);
-          // If we can't check, assume they need onboarding
+          // If can't check, assume they need onboarding
           setNeedsOnboarding(true);
         }
       } else {
