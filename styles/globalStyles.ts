@@ -290,12 +290,11 @@ export const globalStyles = StyleSheet.create({
 
   // Input styles
   input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
+    
     borderColor: colors.border,
-    borderRadius: borderRadius.lg,
+    borderBottomWidth: 1,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     fontSize: 16,
     color: colors.text,
     ...shadows.sm,

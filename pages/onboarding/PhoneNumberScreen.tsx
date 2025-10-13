@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors } from '../../styles/globalStyles';
-import KeyboardAwareButton from '../../components/KeyboardAwareButton';
+
 
 interface PhoneNumberScreenProps {
   value: string;
@@ -102,7 +102,7 @@ export default function PhoneNumberScreen({
                 isValid && styles.inputValid,
                 !isValid && phoneNumber.length > 0 && styles.inputInvalid,
               ]}
-              placeholder="(555) 123-4567"
+              placeholder="074 654 4422"
               placeholderTextColor={colors.textMuted}
               value={phoneNumber}
               onChangeText={handleTextChange}
@@ -129,12 +129,6 @@ export default function PhoneNumberScreen({
           </View>
         </View>
 
-        {/* Floating action button */}
-        <KeyboardAwareButton
-          onPress={handleNext}
-          disabled={!isValid}
-          icon="→"
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

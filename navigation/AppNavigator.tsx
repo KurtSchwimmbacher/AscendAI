@@ -12,12 +12,20 @@ import HomeScreen from '../pages/HomeScreen';
 import { AuthService } from '../services/authService';
 import { FirestoreService } from '../services/firestoreService';
 
-const Stack = createStackNavigator();
+// Define navigation types
+type RootStackParamList = {
+  Auth: undefined;
+  Onboarding: undefined;
+  Home: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -26,6 +34,7 @@ export default function AppNavigator() {
       if (user) {
         setCurrentUser(user);
         setIsAuthenticated(true);
+        setIsCheckingOnboarding(true);
         
         // Check if user needs onboarding
         try {
@@ -35,11 +44,14 @@ export default function AppNavigator() {
           console.error('Error checking onboarding status:', error);
           // If can't check, assume they need onboarding
           setNeedsOnboarding(true);
+        } finally {
+          setIsCheckingOnboarding(false);
         }
       } else {
         setCurrentUser(null);
         setIsAuthenticated(false);
-        setNeedsOnboarding(false);
+        setNeedsOnboarding(null);
+        setIsCheckingOnboarding(false);
       }
       setIsLoading(false);
     });
@@ -48,8 +60,8 @@ export default function AppNavigator() {
     return () => unsubscribe();
   }, []);
 
-  // Show loading screen while checking authentication
-  if (isLoading) {
+  // Show loading screen while checking authentication or onboarding status
+  if (isLoading || isCheckingOnboarding) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -102,28 +114,34 @@ export default function AppNavigator() {
     }
   };
 
+  // Determine initial route based on auth state
+  const getInitialRoute = (): keyof RootStackParamList => {
+    if (!isAuthenticated) return 'Auth';
+    if (needsOnboarding) return 'Onboarding';
+    return 'Home';
+  };
+
+  // Create a unique key based on auth state to force navigator remount when state changes
+  const navigationKey = `${isAuthenticated}-${needsOnboarding}`;
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          needsOnboarding ? (
-            // User needs onboarding
-            <Stack.Screen name="Onboarding">
-              {() => (
-                <OnboardingFlow
-                  onComplete={handleOnboardingComplete}
-                  onSkip={handleOnboardingSkip}
-                />
-              )}
-            </Stack.Screen>
-          ) : (
-            // User is authenticated and onboarded - show main app
-            <Stack.Screen name="Home" component={HomeScreen} />
-          )
-        ) : (
-          // User is not authenticated - show auth flow
-          <Stack.Screen name="Auth" component={AuthFlow} />
-        )}
+    <NavigationContainer> 
+      <Stack.Navigator 
+        key={navigationKey}
+        id={undefined}
+        initialRouteName={getInitialRoute()}
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Auth" component={AuthFlow} />
+        <Stack.Screen name="Onboarding">
+          {() => (
+            <OnboardingFlow
+              onComplete={handleOnboardingComplete}
+              onSkip={handleOnboardingSkip}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Home" component={HomeScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

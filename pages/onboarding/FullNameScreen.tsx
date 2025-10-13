@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles, colors } from '../../styles/globalStyles';
-import KeyboardAwareButton from '../../components/KeyboardAwareButton';
+
 
 interface FullNameScreenProps {
   value: string;
@@ -111,12 +111,6 @@ export default function FullNameScreen({
           </View>
         </View>
 
-        {/* Floating action button */}
-        <KeyboardAwareButton
-          onPress={handleNext}
-          disabled={!isValid}
-          icon="→"
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
