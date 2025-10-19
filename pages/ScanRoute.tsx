@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useCamera } from '../services/cameraService';
 
 // Define navigation types
 type RootStackParamList = {
@@ -18,10 +19,24 @@ type ScanRouteNavigationProp = StackNavigationProp<RootStackParamList, 'ScanRout
 
 export default function ScanRoute() {
     const navigation = useNavigation<ScanRouteNavigationProp>();
-    const [sheetVisible, setSheetVisible] = useState(true);
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const cameraRef = useRef<CameraView>(null);
+    
+    // Use camera service hook
+    const {
+        capturedImage,
+        imageModalVisible,
+        cameraSheetVisible: sheetVisible,
+        takePicture,
+        retakePicture,
+        useImage,
+        setImageModalVisible,
+        setCameraSheetVisible: setSheetVisible,
+    } = useCamera((imageUri: string) => {
+        // TODO: Scan route function after user touch point
+        navigation.goBack();
+    });
 
     const handleGoBack = () => {
         navigation.goBack();
@@ -35,16 +50,8 @@ export default function ScanRoute() {
         setFacing(current => (current === 'back' ? 'front' : 'back'));
     };
 
-    const takePicture = async () => {
-        if (cameraRef.current) {
-            try {
-                const photo = await cameraRef.current.takePictureAsync();
-                console.log('Photo taken:', photo);
-                // TODO: Handle the captured photo
-            } catch (error) {
-                console.error('Error taking picture:', error);
-            }
-        }
+    const handleTakePicture = async () => {
+        await takePicture(cameraRef);
     };
 
     if (!permission) {
@@ -115,7 +122,7 @@ export default function ScanRoute() {
                                     
                                     <TouchableOpacity 
                                         style={styles.captureButton}
-                                        onPress={takePicture}
+                                        onPress={handleTakePicture}
                                     >
                                         <View style={styles.captureButtonInner} />
                                     </TouchableOpacity>
@@ -128,6 +135,43 @@ export default function ScanRoute() {
                                     </TouchableOpacity>
                                 </View>
                             </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Full-Screen Image Display Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={imageModalVisible}
+                onRequestClose={() => setImageModalVisible(false)}
+            >
+                <View style={styles.imageModalOverlay}>
+                    <View style={styles.imageModalContainer}>
+                        {capturedImage && (
+                            <Image 
+                                source={{ uri: capturedImage }} 
+                                style={styles.fullScreenImage}
+                                resizeMode="contain"
+                            />
+                        )}
+                        
+                        {/* Image Controls */}
+                        <View style={styles.imageControls}>
+                            <TouchableOpacity 
+                                style={styles.imageControlButton}
+                                onPress={retakePicture}
+                            >
+                                <Text style={styles.imageControlButtonText}>Retake</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                                style={[styles.imageControlButton, styles.useImageButton]}
+                                onPress={useImage}
+                            >
+                                <Text style={[styles.imageControlButtonText, styles.useImageButtonText]}>Scan Route</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </View>
@@ -223,5 +267,51 @@ const styles = StyleSheet.create({
         height: 60,
         borderRadius: 30,
         backgroundColor: colors.white,
+    },
+    imageModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageModalContainer: {
+        flex: 1,
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullScreenImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    imageControls: {
+        position: 'absolute',
+        bottom: 50,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingHorizontal: 40,
+    },
+    imageControlButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: 30,
+        paddingVertical: 15,
+        borderRadius: 25,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    imageControlButtonText: {
+        color: colors.white,
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    useImageButton: {
+        backgroundColor: colors.black,
+        borderColor: colors.black,
+    },
+    useImageButtonText: {
+        color: colors.white,
     },
     });
