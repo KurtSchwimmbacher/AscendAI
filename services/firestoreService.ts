@@ -33,23 +33,29 @@ export class FirestoreService {
         throw new Error('User ID is required');
       }
 
+      console.log('FirestoreService: Saving profile data:', profile);
+
       const userRef = doc(db, this.USERS_COLLECTION, profile.uid);
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
         // Update existing user
-        await updateDoc(userRef, {
+        const updateData = {
           ...profile,
           updatedAt: serverTimestamp(),
-        });
+        };
+        console.log('FirestoreService: Updating user with data:', updateData);
+        await updateDoc(userRef, updateData);
       } else {
         // Create new user
-        await setDoc(userRef, {
+        const createData = {
           ...profile,
           isOnboardingComplete: false,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        };
+        console.log('FirestoreService: Creating user with data:', createData);
+        await setDoc(userRef, createData);
       }
     } catch (error) {
       throw this.handleFirestoreError(error as FirestoreError);

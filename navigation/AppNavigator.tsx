@@ -7,6 +7,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AuthFlow from '../pages/auth/AuthFlow';
 import OnboardingFlow from '../pages/onboarding/OnboardingFlow';
 import HomeScreen from '../pages/HomeScreen';
+import ScanRoute from '../pages/ScanRoute';
 
 // Import services
 import { AuthService } from '../services/authService';
@@ -17,6 +18,7 @@ type RootStackParamList = {
   Auth: undefined;
   Onboarding: undefined;
   Home: undefined;
+  ScanRoute: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -72,6 +74,8 @@ export default function AppNavigator() {
   const handleOnboardingComplete = async (onboardingData: any) => {
     if (currentUser) {
       try {
+        console.log('Onboarding data being saved:', onboardingData);
+        
         // Save onboarding data to Firestore
         await FirestoreService.createOrUpdateUserProfile({
           uid: currentUser.uid,
@@ -142,6 +146,7 @@ export default function AppNavigator() {
           )}
         </Stack.Screen>
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="ScanRoute" component={ScanRoute} />
       </Stack.Navigator>
     </NavigationContainer>
   );
