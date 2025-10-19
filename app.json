@@ -7,6 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "API_URL": "https://ascendbackend-b2f7.onrender.com"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
