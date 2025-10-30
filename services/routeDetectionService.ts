@@ -80,6 +80,7 @@ export class RouteDetectionService {
         conf: params.conf,
         colour_tolerance: params.colourTolerance,
         return_annotated_image: params.returnAnnotatedImage,
+        show_tap_point: true,
       };
 
       const response: AxiosResponse<RouteByColourResponse> = await apiClient.post(
