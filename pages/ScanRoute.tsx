@@ -1,11 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Image } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCamera } from '../services/cameraService';
+import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
 
 // Define navigation types
 type RootStackParamList = {
@@ -37,6 +38,84 @@ export default function ScanRoute() {
         // TODO: Scan route function after user touch point
         navigation.goBack();
     });
+
+    // Detection hook
+    const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
+
+    // Track the displayed image dimensions and original pixel size for precise tap mapping
+    const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+    const [displayedImageUri, setDisplayedImageUri] = useState<string | null>(null);
+
+    // Load intrinsic size when a new image is captured
+    useEffect(() => {
+        if (!capturedImage) return;
+        Image.getSize(
+            capturedImage,
+            (w, h) => setImageSize({ width: w, height: h }),
+            () => setImageSize(null)
+        );
+        setDisplayedImageUri(capturedImage);
+        resetDetection();
+    }, [capturedImage, resetDetection]);
+
+    const onImageLayout = (e: any) => {
+        setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
+    };
+
+    const mapTapToImagePixels = (tapX: number, tapY: number) => {
+        if (!imageSize) return null;
+        const { width: cw, height: ch } = containerSize;
+        const { width: iw, height: ih } = imageSize;
+        if (cw <= 0 || ch <= 0 || iw <= 0 || ih <= 0) return null;
+
+        const scale = Math.min(cw / iw, ch / ih);
+        const renderedW = iw * scale;
+        const renderedH = ih * scale;
+        const offsetX = (cw - renderedW) / 2;
+        const offsetY = (ch - renderedH) / 2;
+
+        // If tapped outside the actual rendered image area, ignore
+        if (tapX < offsetX || tapX > offsetX + renderedW || tapY < offsetY || tapY > offsetY + renderedH) {
+            return null;
+        }
+
+        const px = Math.round((tapX - offsetX) / scale);
+        const py = Math.round((tapY - offsetY) / scale);
+        return { x: px, y: py };
+    };
+
+    // Press-and-hold selection state
+    const [isHolding, setIsHolding] = useState(false);
+    const [holdPointPx, setHoldPointPx] = useState<{ x: number; y: number } | null>(null);
+    const [holdPointScreen, setHoldPointScreen] = useState<{ x: number; y: number } | null>(null);
+
+    const mapImagePixelsToScreen = (px: number, py: number) => {
+        if (!imageSize) return null;
+        const { width: cw, height: ch } = containerSize;
+        const { width: iw, height: ih } = imageSize;
+        const scale = Math.min(cw / iw, ch / ih);
+        const renderedW = iw * scale;
+        const renderedH = ih * scale;
+        const offsetX = (cw - renderedW) / 2;
+        const offsetY = (ch - renderedH) / 2;
+        return { sx: offsetX + px * scale, sy: offsetY + py * scale };
+    };
+
+    const onPressInImage = (e: any) => {
+        if (!imageSize) return;
+        const { locationX, locationY } = e.nativeEvent;
+        const mapped = mapTapToImagePixels(locationX, locationY);
+        if (!mapped) return;
+        const screen = mapImagePixelsToScreen(mapped.x, mapped.y);
+        setIsHolding(true);
+        setHoldPointPx(mapped);
+        if (screen) setHoldPointScreen({ x: screen.sx, y: screen.sy });
+    };
+
+    const onPressOutImage = () => {
+        setIsHolding(false);
+    };
 
     const handleGoBack = () => {
         navigation.goBack();
@@ -149,12 +228,38 @@ export default function ScanRoute() {
             >
                 <View style={styles.imageModalOverlay}>
                     <View style={styles.imageModalContainer}>
-                        {capturedImage && (
-                            <Image 
-                                source={{ uri: capturedImage }} 
-                                style={styles.fullScreenImage}
-                                resizeMode="contain"
-                            />
+                        {displayedImageUri && (
+                            <Pressable style={styles.imagePressable} onPressIn={onPressInImage} onPressOut={onPressOutImage}>
+                                <Image 
+                                    onLayout={onImageLayout}
+                                    source={{ uri: displayedImageUri }} 
+                                    style={styles.fullScreenImage}
+                                    resizeMode="contain"
+                                />
+                                {holdPointScreen && (
+                                    <View
+                                        pointerEvents="none"
+                                        style={[
+                                            styles.holdMarker,
+                                            { left: holdPointScreen.x - 16, top: holdPointScreen.y - 16 },
+                                            isHolding ? styles.holdMarkerActive : null,
+                                        ]}
+                                    />
+                                )}
+                            </Pressable>
+                        )}
+
+                        {/* Detection state overlays */}
+                        {detecting && (
+                            <View style={styles.detectOverlay}> 
+                                <ActivityIndicator size="large" color={colors.white} />
+                                <Text style={styles.detectText}>Detecting route by colour…</Text>
+                            </View>
+                        )}
+                        {!!detectError && (
+                            <View style={styles.errorBanner}>
+                                <Text style={styles.errorText}>{detectError}</Text>
+                            </View>
                         )}
                         
                         {/* Image Controls */}
@@ -168,9 +273,29 @@ export default function ScanRoute() {
                             
                             <TouchableOpacity 
                                 style={[styles.imageControlButton, styles.useImageButton]}
-                                onPress={useImage}
+                                onPress={async () => {
+                                    if (!capturedImage || !holdPointPx) return;
+                                    const params: ColourFilterRequest = {
+                                        tapX: holdPointPx.x,
+                                        tapY: holdPointPx.y,
+                                        conf: 0.25,
+                                        colourTolerance: 18,
+                                        returnAnnotatedImage: true,
+                                    };
+                                    try {
+                                        const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
+                                        if (result?.image_with_boxes) {
+                                            setDisplayedImageUri(result.image_with_boxes);
+                                            // Re-map marker position because container may be the same; keep marker
+                                            const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
+                                            if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
+                                        }
+                                    } catch {}
+                                }}
                             >
-                                <Text style={[styles.imageControlButtonText, styles.useImageButtonText]}>Scan Route</Text>
+                                <Text style={[styles.imageControlButtonText, styles.useImageButtonText]}>
+                                    {holdPointPx ? 'Scan Route' : 'Tap & Hold to Select'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -294,6 +419,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         paddingHorizontal: 40,
     },
+    imagePressable: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
     imageControlButton: {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         paddingHorizontal: 30,
@@ -313,5 +443,48 @@ const styles = StyleSheet.create({
     },
     useImageButtonText: {
         color: colors.white,
+    },
+    holdMarker: {
+        position: 'absolute',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: colors.white,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+    },
+    holdMarkerActive: {
+        borderColor: colors.black,
+        backgroundColor: 'rgba(0,0,0,0.15)',
+    },
+    detectOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.25)',
+    },
+    detectText: {
+        marginTop: 12,
+        color: colors.white,
+        fontWeight: '600',
+    },
+    errorBanner: {
+        position: 'absolute',
+        top: 40,
+        left: 20,
+        right: 20,
+        backgroundColor: 'rgba(220, 53, 69, 0.9)',
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 8,
+    },
+    errorText: {
+        color: colors.white,
+        textAlign: 'center',
+        fontWeight: '600',
     },
     });
