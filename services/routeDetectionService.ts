@@ -8,9 +8,6 @@ const API_URL = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b
 const apiClient = axios.create({
   baseURL: API_URL,
   timeout: 10000, // 10 second timeout
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Health check response interface
@@ -96,8 +93,9 @@ export class RouteDetectionService {
         '/routes/detect-by-colour',
         formData,
         {
-          // Let Axios set multipart boundaries; include query params
+          // Include query params; let Axios set multipart boundaries automatically
           params: queryParams,
+          timeout: 180000, // 180s to allow long-running detection
         },
       );
 
@@ -118,6 +116,11 @@ export class RouteDetectionService {
           params: (error.config as any)?.params,
           responseData: data,
         });
+        // Additional debug detail for validation errors and request headers
+        // eslint-disable-next-line no-console
+        console.error('detail', JSON.stringify((data as any)?.detail ?? data, null, 2));
+        // eslint-disable-next-line no-console
+        console.error('reqHeaders', (error.config as any)?.headers);
 
         if (error.response) {
           // Surface FastAPI validation errors when present

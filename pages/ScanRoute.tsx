@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCamera } from '../services/cameraService';
 import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
+import Constants from 'expo-constants';
 
 // Define navigation types
 type RootStackParamList = {
@@ -279,13 +280,17 @@ export default function ScanRoute() {
                                         tapX: holdPointPx.x,
                                         tapY: holdPointPx.y,
                                         conf: 0.25,
-                                        colourTolerance: 18,
+                                        colourTolerance: 30,
                                         returnAnnotatedImage: true,
                                     };
                                     try {
                                         const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
                                         if (result?.image_with_boxes) {
-                                            setDisplayedImageUri(result.image_with_boxes);
+                                            const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
+                                            const absolute = result.image_with_boxes.startsWith('http')
+                                                ? result.image_with_boxes
+                                                : `${baseUrl}${result.image_with_boxes}`;
+                                            setDisplayedImageUri(absolute);
                                             // Re-map marker position because container may be the same; keep marker
                                             const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
                                             if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
