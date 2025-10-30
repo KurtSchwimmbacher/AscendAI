@@ -285,6 +285,15 @@ export default function ScanRoute() {
                                     };
                                     try {
                                         const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
+                                        // Log API response for debugging coordinate mapping and filtering
+                                        // eslint-disable-next-line no-console
+                                        console.log('API response:', {
+                                            requestedTap: { x: params.tapX, y: params.tapY },
+                                            selected_colour: result?.selected_colour,
+                                            colour_confidence: result?.colour_confidence,
+                                            detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
+                                            image_with_boxes: result?.image_with_boxes,
+                                        });
                                         if (result?.image_with_boxes) {
                                             const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
                                             const absolute = result.image_with_boxes.startsWith('http')

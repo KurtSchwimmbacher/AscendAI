@@ -1,6 +1,5 @@
 import React from 'react';
 import { CameraView } from 'expo-camera';
-import { RouteDetectionService } from './routeDetectionService';
 import * as ImageManipulator from 'expo-image-manipulator';
 
 export interface CameraState {
@@ -35,12 +34,7 @@ export class CameraService {
   async takePicture(cameraRef: React.RefObject<CameraView>): Promise<void> {
     if (cameraRef.current) {
       try {
-        // Test health point of API 
-        // -> this should give the API some time to start up so when the user scans a route the wait time is minimal
-        console.log("Health check of API: " + RouteDetectionService.checkHealth());
-        
-      const photo = await cameraRef.current.takePictureAsync({ exif: true });
-        console.log('Photo taken:', photo);
+        const photo = await cameraRef.current.takePictureAsync({ exif: true });
       
       // Normalize orientation by saving pixels as currently rendered (no-op rotate)
       let normalizedUri = photo.uri;
@@ -62,7 +56,6 @@ export class CameraService {
           cameraSheetVisible: false,
         }));
       } catch (error) {
-        console.error('Error taking picture:', error);
         throw error;
       }
     }
@@ -79,8 +72,6 @@ export class CameraService {
 
   useImage(): void {
     if (this.state.capturedImage) {
-      console.log('Using image:', this.state.capturedImage);
-      
       // Call the callback if provided
       if (this.onImageUsed) {
         this.onImageUsed(this.state.capturedImage);

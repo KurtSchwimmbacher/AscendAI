@@ -25,16 +25,9 @@ export class RouteDetectionService {
    */
   static async checkHealth(): Promise<HealthResponse> {
     try {
-      console.log('RouteDetectionService: Checking API health...');
-      
       const response: AxiosResponse<HealthResponse> = await apiClient.get('/health');
-      
-      console.log('RouteDetectionService: Health check successful:', response.data);
-      
       return response.data;
     } catch (error) {
-      console.error('RouteDetectionService: Health check failed:', error);
-      
       // Handle different types of errors
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -102,34 +95,11 @@ export class RouteDetectionService {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        // Structured logging for easier debugging
-        const status = error.response?.status;
-        const data = error.response?.data as any;
-        const url = error.config?.baseURL
-          ? `${error.config.baseURL}${error.config.url ?? ''}`
-          : error.config?.url;
-        // Log key diagnostics
-        // eslint-disable-next-line no-console
-        console.error('detectRouteByColour failed', {
-          status,
-          url,
-          params: (error.config as any)?.params,
-          responseData: data,
-        });
-        // Additional debug detail for validation errors and request headers
-        // eslint-disable-next-line no-console
-        console.error('detail', JSON.stringify((data as any)?.detail ?? data, null, 2));
-        // eslint-disable-next-line no-console
-        console.error('reqHeaders', (error.config as any)?.headers);
-
         if (error.response) {
           // Surface FastAPI validation errors when present
-          const message =
-            data?.detail ||
-            data?.message ||
-            (Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]) : undefined) ||
-            'Unknown server error';
-          throw new Error(`API Error ${status}: ${message}`);
+          const data = error.response?.data as any;
+          const message = data?.detail || data?.message || 'Unknown server error';
+          throw new Error(`API Error ${error.response.status}: ${message}`);
         }
         if (error.request) {
           throw new Error('Network Error: No response from server');
