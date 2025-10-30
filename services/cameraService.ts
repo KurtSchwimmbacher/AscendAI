@@ -1,6 +1,7 @@
 import React from 'react';
 import { CameraView } from 'expo-camera';
 import { RouteDetectionService } from './routeDetectionService';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export interface CameraState {
   capturedImage: string | null;
@@ -38,12 +39,25 @@ export class CameraService {
         // -> this should give the API some time to start up so when the user scans a route the wait time is minimal
         console.log("Health check of API: " + RouteDetectionService.checkHealth());
         
-        const photo = await cameraRef.current.takePictureAsync();
+      const photo = await cameraRef.current.takePictureAsync({ exif: true });
         console.log('Photo taken:', photo);
+      
+      // Normalize orientation by saving pixels as currently rendered (no-op rotate)
+      let normalizedUri = photo.uri;
+      try {
+        const manipulated = await ImageManipulator.manipulateAsync(
+          photo.uri,
+          [{ rotate: 0 }],
+          { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        normalizedUri = manipulated.uri;
+      } catch (manipError) {
+        console.warn('Orientation normalization failed, using original photo uri:', manipError);
+      }
         
         this.setState(prevState => ({
           ...prevState,
-          capturedImage: photo.uri,
+        capturedImage: normalizedUri,
           imageModalVisible: true,
           cameraSheetVisible: false,
         }));
