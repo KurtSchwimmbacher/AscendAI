@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useCamera } from '../services/cameraService';
 import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
+import { useReadRouteGrade } from '../hooks/readHook';
 import Constants from 'expo-constants';
 
 // Define navigation types
@@ -42,6 +43,8 @@ export default function ScanRoute() {
 
     // Detection hook
     const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
+    const { loading: reading, error: readError, data: gradeData, readGrade, reset: resetRead } = useReadRouteGrade();
+    const [gradeBanner, setGradeBanner] = useState<string | null>(null);
 
     // Track the displayed image dimensions and original pixel size for precise tap mapping
     const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -257,6 +260,11 @@ export default function ScanRoute() {
                                 <Text style={styles.detectText}>Detecting route by colour…</Text>
                             </View>
                         )}
+                        {gradeBanner && (
+                            <View style={styles.gradeBanner}>
+                                <Text style={styles.gradeText}>{gradeBanner}</Text>
+                            </View>
+                        )}
                         {!!detectError && (
                             <View style={styles.errorBanner}>
                                 <Text style={styles.errorText}>{detectError}</Text>
@@ -280,13 +288,12 @@ export default function ScanRoute() {
                                         tapX: holdPointPx.x,
                                         tapY: holdPointPx.y,
                                         conf: 0.25,
-                                        colourTolerance: 30,
+                                        colourTolerance: 10,
                                         returnAnnotatedImage: true,
                                     };
                                     try {
                                         const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
                                         // Log API response for debugging coordinate mapping and filtering
-                                        // eslint-disable-next-line no-console
                                         console.log('API response:', {
                                             requestedTap: { x: params.tapX, y: params.tapY },
                                             selected_colour: result?.selected_colour,
@@ -303,6 +310,16 @@ export default function ScanRoute() {
                                             // Re-map marker position because container may be the same; keep marker
                                             const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
                                             if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
+
+                                            // Kick off grade reading using the annotated image
+                                            try {
+                                                setGradeBanner('Reading route…');
+                                                const grade = await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
+                                                const text = `${grade.v_grade} (${Math.round(grade.confidence * 100)}%)`;
+                                                setGradeBanner(text);
+                                            } catch (e) {
+                                                setGradeBanner(readError || '');
+                                            }
                                         }
                                     } catch {}
                                 }}
@@ -500,5 +517,19 @@ const styles = StyleSheet.create({
         color: colors.white,
         textAlign: 'center',
         fontWeight: '600',
+    },
+    gradeBanner: {
+        position: 'absolute',
+        top: 16,
+        alignSelf: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+    },
+    gradeText: {
+        color: colors.white,
+        fontWeight: '700',
+        fontSize: 16,
     },
     });
