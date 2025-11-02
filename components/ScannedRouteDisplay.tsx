@@ -91,11 +91,16 @@ export default function ScannedRouteDisplay({
           </View>
         )}
 
-        {/* Bottom Controls - Retake and Close */}
+        {/* Bottom Controls - Retake, View Grade, and Close */}
         <View style={styles.bottomControls}>
           <Pressable style={styles.retakeButton} onPress={onRetake}>
             <Text style={styles.retakeButtonText}>Retake</Text>
           </Pressable>
+          {isAnnotated && (gradeData || gradeError) && (
+            <Pressable style={styles.viewGradeButton} onPress={() => setSheetVisible(true)}>
+              <Text style={styles.viewGradeButtonText}>View Grade</Text>
+            </Pressable>
+          )}
           {onClose && (
             <Pressable style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>✕</Text>
@@ -223,6 +228,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   retakeButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  viewGradeButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  viewGradeButtonText: {
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',

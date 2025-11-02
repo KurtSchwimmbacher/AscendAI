@@ -10,6 +10,7 @@ import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detec
 import { useReadRouteGrade } from '../hooks/readHook';
 import Constants from 'expo-constants';
 import ScannedRouteDisplay from '../components/ScannedRouteDisplay';
+import RouteDetectionOverlay from '../components/RouteDetectionOverlay';
 
 // Define navigation types
 type RootStackParamList = {
@@ -245,13 +246,8 @@ export default function ScanRoute() {
             >
                 <View style={styles.imageModalOverlay}>
                     <View style={styles.imageModalContainer}>
-                        {/* Detection state overlays */}
-                        {detecting && (
-                            <View style={styles.detectOverlay}> 
-                                <ActivityIndicator size="large" color={colors.white} />
-                                <Text style={styles.detectText}>Detecting route by colour…</Text>
-                            </View>
-                        )}
+                        {/* Detection overlay with rotating messages */}
+                        <RouteDetectionOverlay visible={detecting} />
                         {!!detectError && (
                             <View style={styles.errorBanner}>
                                 <Text style={styles.errorText}>{detectError}</Text>
@@ -390,21 +386,6 @@ const styles = StyleSheet.create({
     scanButtonText: {
         color: colors.white,
         fontSize: 16,
-        fontWeight: '600',
-    },
-    detectOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.25)',
-    },
-    detectText: {
-        marginTop: 12,
-        color: colors.white,
         fontWeight: '600',
     },
     errorBanner: {
