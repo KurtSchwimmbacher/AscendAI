@@ -8,6 +8,7 @@ import {
   FirestoreError,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { FirestoreRouteDocument } from '../types/routeData';
 
 // User profile interface
 export interface UserProfile {
@@ -25,6 +26,7 @@ export interface UserProfile {
 // Firestore service class for user data management
 export class FirestoreService {
   private static readonly USERS_COLLECTION = 'users';
+  private static readonly ROUTES_COLLECTION = 'routes';
 
   // Create or update user profile
   static async createOrUpdateUserProfile(profile: Partial<UserProfile>): Promise<void> {
@@ -113,6 +115,78 @@ export class FirestoreService {
     }
   }
 
+  /**
+   * Save a route scan to Firestore
+   * @param routeData - Complete route data including image URL and grade
+   * @returns Promise resolving to the document ID
+   */
+  static async saveRoute(routeData: Omit<FirestoreRouteDocument, 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      if (!routeData.userId) {
+        throw new Error('User ID is required');
+      }
+
+      if (!routeData.imageUrl) {
+        throw new Error('Image URL is required');
+      }
+
+      // Create a new document with auto-generated ID
+      const routesRef = collection(db, this.ROUTES_COLLECTION);
+      const routeDocRef = doc(routesRef);
+
+      const documentData: FirestoreRouteDocument = {
+        ...routeData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await setDoc(routeDocRef, documentData);
+
+      return routeDocRef.id;
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
+   * Get a route by document ID
+   * @param routeId - Document ID of the route
+   * @returns Promise resolving to route document or null
+   */
+  static async getRoute(routeId: string): Promise<FirestoreRouteDocument | null> {
+    try {
+      const routeRef = doc(db, this.ROUTES_COLLECTION, routeId);
+      const routeDoc = await getDoc(routeRef);
+
+      if (routeDoc.exists()) {
+        return routeDoc.data() as FirestoreRouteDocument;
+      }
+      return null;
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
+   * Get all routes for a user
+   * @param userId - User ID
+   * @returns Promise resolving to array of route documents
+   */
+  static async getUserRoutes(userId: string): Promise<FirestoreRouteDocument[]> {
+    try {
+      const routesRef = collection(db, this.ROUTES_COLLECTION);
+      // Note: For querying, you would need to use query() and where()
+      // For now, this is a placeholder - you can implement querying later
+      // using: query(routesRef, where('userId', '==', userId), orderBy('createdAt', 'desc'))
+      
+      // This method will need query() import and implementation
+      // Leaving as placeholder for now
+      throw new Error('getUserRoutes not yet implemented. Use query() with where() clause.');
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
   // Handle Firestore errors
   private static handleFirestoreError(error: FirestoreError): Error {
     let message = 'A database error occurred';
@@ -163,4 +237,10 @@ export const {
   updateUserField,
   completeOnboarding,
   isOnboardingComplete,
+  saveRoute,
+  getRoute,
+  getUserRoutes,
 } = FirestoreService;
+
+// Export types
+export type { FirestoreRouteDocument } from '../types/routeData';

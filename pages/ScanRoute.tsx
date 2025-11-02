@@ -9,6 +9,8 @@ import { MainTabParamList } from '../navigation/MainTabs';
 import { useCamera } from '../services/cameraService';
 import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
 import { useReadRouteGrade } from '../hooks/readHook';
+import { useSaveRoute } from '../hooks/useSaveRoute';
+import { AuthService } from '../services/authService';
 import Constants from 'expo-constants';
 import ScannedRouteDisplay from '../components/ScannedRouteDisplay';
 import RouteDetectionOverlay from '../components/RouteDetectionOverlay';
@@ -39,6 +41,10 @@ export default function ScanRoute() {
     // Detection hook
     const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
     const { loading: reading, error: readError, data: gradeData, readGrade, reset: resetRead } = useReadRouteGrade();
+    const { loading: saving, error: saveError, saveRoute } = useSaveRoute();
+
+    // Store detection result for saving
+    const [detectionResult, setDetectionResult] = useState<any>(null);
 
     // Track the displayed image dimensions and original pixel size for precise tap mapping
     const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -58,6 +64,7 @@ export default function ScanRoute() {
         setIsAnnotatedImage(false);
         resetDetection();
         resetRead();
+        setDetectionResult(null);
     }, [capturedImage, resetDetection, resetRead]);
 
     const onImageLayout = (e: any) => {
@@ -160,6 +167,9 @@ export default function ScanRoute() {
                 const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
                 if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
 
+                // Store detection result for saving later
+                setDetectionResult(result);
+
                 // Kick off grade reading only after annotated image is set
                 try {
                     await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
@@ -169,6 +179,28 @@ export default function ScanRoute() {
             }
         } catch {}
     };
+
+    // Save route when grade reading completes successfully
+    useEffect(() => {
+        if (gradeData && detectionResult && displayedImageUri && !saving) {
+            const currentUser = AuthService.getCurrentUser();
+            if (!currentUser) {
+                console.warn('Cannot save route: User not authenticated');
+                return;
+            }
+
+            // Save route asynchronously (don't await - let it run in background)
+            saveRoute({
+                userId: currentUser.uid,
+                annotatedImageUrl: displayedImageUri,
+                gradeData: gradeData,
+                detectionData: detectionResult,
+            }).catch((error) => {
+                console.error('Failed to save route:', error);
+                // Error is handled by hook state
+            });
+        }
+    }, [gradeData, detectionResult, displayedImageUri, saving, saveRoute]);
 
     if (!permission) {
         // Camera permissions are still loading
