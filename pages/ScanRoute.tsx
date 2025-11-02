@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../navigation/MainTabs';
 import { useCamera } from '../services/cameraService';
 import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
 import { useReadRouteGrade } from '../hooks/readHook';
@@ -12,15 +13,7 @@ import Constants from 'expo-constants';
 import ScannedRouteDisplay from '../components/ScannedRouteDisplay';
 import RouteDetectionOverlay from '../components/RouteDetectionOverlay';
 
-// Define navigation types
-type RootStackParamList = {
-  Auth: undefined;
-  Onboarding: undefined;
-  Home: undefined;
-  ScanRoute: undefined;
-};
-
-type ScanRouteNavigationProp = StackNavigationProp<RootStackParamList, 'ScanRoute'>;
+type ScanRouteNavigationProp = BottomTabNavigationProp<MainTabParamList, 'ScanRoute'>;
 
 export default function ScanRoute() {
     const navigation = useNavigation<ScanRouteNavigationProp>();

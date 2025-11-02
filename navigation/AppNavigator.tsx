@@ -6,8 +6,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 // Import screens
 import AuthFlow from '../pages/auth/AuthFlow';
 import OnboardingFlow from '../pages/onboarding/OnboardingFlow';
-import HomeScreen from '../pages/HomeScreen';
-import ScanRoute from '../pages/ScanRoute';
+import MainTabs from './MainTabs';
 
 // Import services
 import { AuthService } from '../services/authService';
@@ -17,8 +16,7 @@ import { FirestoreService } from '../services/firestoreService';
 type RootStackParamList = {
   Auth: undefined;
   Onboarding: undefined;
-  Home: undefined;
-  ScanRoute: undefined;
+  MainTabs: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -122,7 +120,7 @@ export default function AppNavigator() {
   const getInitialRoute = (): keyof RootStackParamList => {
     if (!isAuthenticated) return 'Auth';
     if (needsOnboarding) return 'Onboarding';
-    return 'Home';
+    return 'MainTabs';
   };
 
   // Create a unique key based on auth state to force navigator remount when state changes
@@ -145,8 +143,7 @@ export default function AppNavigator() {
             />
           )}
         </Stack.Screen>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="ScanRoute" component={ScanRoute} />
+        <Stack.Screen name="MainTabs" component={MainTabs} />
       </Stack.Navigator>
     </NavigationContainer>
   );

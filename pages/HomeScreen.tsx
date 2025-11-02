@@ -10,17 +10,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, globalStyles } from '../styles/globalStyles';
 import { AuthService } from '../services/authService';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../navigation/MainTabs';
 
-// Define navigation types
-type RootStackParamList = {
-  Auth: undefined;
-  Onboarding: undefined;
-  Home: undefined;
-  ScanRoute: undefined;
-};
-
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+type HomeScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Home'>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -76,7 +69,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   heroImageContainer: {
     position: 'absolute',
-    top: 0,
+    top: 40,
     left: 0,
     right: 0,
     height: '80%',
@@ -93,14 +86,14 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     position: 'absolute',
-    top: 20,
+    top: 30,
     left: 20,
     right: 20,
     alignItems: 'flex-start',
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 20,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
