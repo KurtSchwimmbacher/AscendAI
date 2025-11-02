@@ -191,6 +191,49 @@ export class FirestoreService {
   }
 
   /**
+   * Update a route document
+   * @param routeId - Document ID of the route to update
+   * @param updates - Partial route data to update
+   * @returns Promise resolving when update is complete
+   */
+  static async updateRoute(
+    routeId: string,
+    updates: Partial<Omit<FirestoreRouteDocument, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'imageUrl' | 'imagePath' | 'timestamp' | 'grade' | 'detection'>>,
+  ): Promise<void> {
+    try {
+      if (!routeId) {
+        throw new Error('Route ID is required');
+      }
+
+      const routeRef = doc(db, this.ROUTES_COLLECTION, routeId);
+      await updateDoc(routeRef, {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
+   * Delete a single route by document ID
+   * @param routeId - Document ID of the route to delete
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteRoute(routeId: string): Promise<void> {
+    try {
+      if (!routeId) {
+        throw new Error('Route ID is required');
+      }
+
+      const routeRef = doc(db, this.ROUTES_COLLECTION, routeId);
+      await deleteDoc(routeRef);
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
    * Delete all routes for a user from Firestore
    * @param userId - User ID
    * @returns Promise resolving when deletion is complete

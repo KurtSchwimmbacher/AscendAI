@@ -162,6 +162,39 @@ export class StorageService {
   }
 
   /**
+   * Deletes a single route image from Firebase Storage by path
+   * @param imagePath - Storage path to the image (e.g., "routes/userId/filename.jpg")
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteRouteImage(imagePath: string): Promise<void> {
+    try {
+      if (!imagePath) {
+        throw new Error('Image path is required');
+      }
+
+      // Extract the path from URL if a full URL is provided
+      let path = imagePath;
+      if (imagePath.includes('firebasestorage.googleapis.com')) {
+        // Extract path from Firebase Storage URL
+        const urlParts = imagePath.split('/o/');
+        if (urlParts.length > 1) {
+          path = decodeURIComponent(urlParts[1].split('?')[0]);
+        }
+      }
+
+      const imageRef = ref(storage, path);
+      await deleteObject(imageRef);
+    } catch (error) {
+      // If file doesn't exist or already deleted, that's okay
+      if (error instanceof Error && 'code' in error && (error as any).code === 'storage/object-not-found') {
+        console.warn('Image already deleted or not found:', imagePath);
+        return;
+      }
+      throw this.handleStorageError(error as StorageError | Error);
+    }
+  }
+
+  /**
    * Deletes all route images for a user from Firebase Storage
    * @param userId - User ID
    * @returns Promise resolving when deletion is complete

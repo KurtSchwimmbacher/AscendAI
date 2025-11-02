@@ -34,6 +34,9 @@ export interface RouteScanData {
  */
 export interface FirestoreRouteDocument extends Omit<RouteScanData, 'createdAt'> {
   id?: string; // Document ID
+  routeName?: string; // Optional custom route name
+  manualGrade?: string; // Optional manual grade override
+  notes?: string; // Optional user notes
   createdAt: any; // Firestore timestamp
   updatedAt?: any; // Firestore timestamp
 }

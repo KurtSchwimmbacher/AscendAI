@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -7,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { AuthService } from '../services/authService';
 import { FirestoreService, FirestoreRouteDocument } from '../services/firestoreService';
+import { StorageService } from '../services/storageService';
 import { HomeStackParamList } from '../navigation/HomeStack';
 import { MainTabParamList } from '../navigation/MainTabs';
 
@@ -27,11 +30,16 @@ type PastRoutesNavigationProp = CompositeNavigationProp<
 
 interface RouteCardProps {
   route: FirestoreRouteDocument;
+  onPress: () => void;
+  onDelete: (routeId: string) => void;
+  isDeleting?: boolean;
 }
 
-const RouteCard: React.FC<RouteCardProps> = ({ route }) => {
+const RouteCard: React.FC<RouteCardProps> = ({ route, onPress, onDelete, isDeleting }) => {
+  const displayGrade = route.manualGrade || route.grade.v_grade;
+  
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       <Image
         source={{ uri: route.imageUrl }}
         style={styles.cardImage}
@@ -39,19 +47,41 @@ const RouteCard: React.FC<RouteCardProps> = ({ route }) => {
       />
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
-          <Text style={styles.gradeText}>{route.grade.v_grade}</Text>
+          <Text style={styles.gradeText}>{displayGrade}</Text>
           <Text style={styles.confidenceText}>
             {Math.round(route.grade.confidence * 100)}% confidence
           </Text>
         </View>
+        {route.routeName && (
+          <Text style={styles.routeNameText} numberOfLines={1}>
+            {route.routeName}
+          </Text>
+        )}
         <Text style={styles.colorText} numberOfLines={1}>
           Color: {route.detection.selected_colour}
         </Text>
         <Text style={styles.factorsText} numberOfLines={2}>
           {route.grade.key_factors.slice(0, 2).join(', ')}
         </Text>
+        <TouchableOpacity
+          style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+          onPress={(e) => {
+            e.stopPropagation();
+            onDelete(route.id!);
+          }}
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <>
+              <Ionicons name="trash-outline" size={16} color={colors.white} />
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -60,10 +90,13 @@ export default function PastRoutes() {
   const [routes, setRoutes] = useState<FirestoreRouteDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingRouteId, setDeletingRouteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRoutes();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadRoutes();
+    }, [])
+  );
 
   const loadRoutes = async () => {
     try {
@@ -85,6 +118,52 @@ export default function PastRoutes() {
       console.error('Error loading routes:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteRoute = (routeId: string) => {
+    const route = routes.find((r) => r.id === routeId);
+    if (!route) return;
+
+    Alert.alert(
+      'Delete Route',
+      `Are you sure you want to delete this ${route.grade.v_grade} route? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => confirmDeleteRoute(routeId, route),
+        },
+      ]
+    );
+  };
+
+  const confirmDeleteRoute = async (routeId: string, route: FirestoreRouteDocument) => {
+    try {
+      setDeletingRouteId(routeId);
+
+      // Delete route image from Storage
+      if (route.imagePath || route.imageUrl) {
+        try {
+          await StorageService.deleteRouteImage(route.imagePath || route.imageUrl);
+        } catch (error) {
+          // Continue even if image deletion fails
+          console.warn('Failed to delete route image:', error);
+        }
+      }
+
+      // Delete route from Firestore
+      await FirestoreService.deleteRoute(routeId);
+
+      // Remove from local state
+      setRoutes((prevRoutes) => prevRoutes.filter((r) => r.id !== routeId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete route';
+      Alert.alert('Error', message);
+      console.error('Error deleting route:', err);
+    } finally {
+      setDeletingRouteId(null);
     }
   };
 
@@ -144,7 +223,14 @@ export default function PastRoutes() {
       ) : (
         <FlatList
           data={routes}
-          renderItem={({ item }) => <RouteCard route={item} />}
+          renderItem={({ item }) => (
+            <RouteCard
+              route={item}
+              onPress={() => navigation.navigate('RouteDetail', { route: item })}
+              onDelete={handleDeleteRoute}
+              isDeleting={deletingRouteId === item.id}
+            />
+          )}
           keyExtractor={(item, index) => item.id || `route-${index}`}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -190,6 +276,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  routeNameText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.black,
+    marginBottom: 4,
+  },
   cardImage: {
     width: '100%',
     height: 200,
@@ -222,5 +314,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.error,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
+  },
+  deleteButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
