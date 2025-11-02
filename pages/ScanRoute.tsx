@@ -9,6 +9,7 @@ import { useCamera } from '../services/cameraService';
 import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
 import { useReadRouteGrade } from '../hooks/readHook';
 import Constants from 'expo-constants';
+import ScannedRouteDisplay from '../components/ScannedRouteDisplay';
 
 // Define navigation types
 type RootStackParamList = {
@@ -44,12 +45,12 @@ export default function ScanRoute() {
     // Detection hook
     const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
     const { loading: reading, error: readError, data: gradeData, readGrade, reset: resetRead } = useReadRouteGrade();
-    const [gradeBanner, setGradeBanner] = useState<string | null>(null);
 
     // Track the displayed image dimensions and original pixel size for precise tap mapping
     const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
     const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
     const [displayedImageUri, setDisplayedImageUri] = useState<string | null>(null);
+    const [isAnnotatedImage, setIsAnnotatedImage] = useState(false);
 
     // Load intrinsic size when a new image is captured
     useEffect(() => {
@@ -60,8 +61,10 @@ export default function ScanRoute() {
             () => setImageSize(null)
         );
         setDisplayedImageUri(capturedImage);
+        setIsAnnotatedImage(false);
         resetDetection();
-    }, [capturedImage, resetDetection]);
+        resetRead();
+    }, [capturedImage, resetDetection, resetRead]);
 
     const onImageLayout = (e: any) => {
         setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
@@ -125,13 +128,6 @@ export default function ScanRoute() {
         navigation.goBack();
     };
 
-    const closeSheet = () => {
-        setSheetVisible(false);
-    };
-
-    const toggleCameraFacing = () => {
-        setFacing(current => (current === 'back' ? 'front' : 'back'));
-    };
 
     const handleTakePicture = async () => {
         await takePicture(cameraRef);
@@ -174,21 +170,9 @@ export default function ScanRoute() {
                 </TouchableOpacity>
             </View>
             
-            {/* Main Content - Empty background */}
-            <View style={styles.content} />
-
-            {/* Camera Sheet Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={sheetVisible}
-                onRequestClose={closeSheet}
-            >
-                <View style={styles.sheetOverlay}>
-                    <Pressable style={styles.sheetBackdrop} onPress={closeSheet} />
-                    <View style={styles.sheetContainer}>
-                        <View style={styles.sheetHandle} />
-                        <View style={styles.sheetContent}>
+            {/* Main Content - Camera View */}
+            {!imageModalVisible && (
+                <View style={styles.content}>
                             <CameraView 
                                 ref={cameraRef}
                                 style={styles.camera}
@@ -196,12 +180,7 @@ export default function ScanRoute() {
                             />
                             <View style={styles.cameraOverlay}>
                                 <View style={styles.cameraControls}>
-                                    <TouchableOpacity 
-                                        style={styles.controlButton}
-                                        onPress={toggleCameraFacing}
-                                    >
-                                        <Text style={styles.controlButtonText}>🔄</Text>
-                                    </TouchableOpacity>
+                                    
                                     
                                     <TouchableOpacity 
                                         style={styles.captureButton}
@@ -209,19 +188,10 @@ export default function ScanRoute() {
                                     >
                                         <View style={styles.captureButtonInner} />
                                     </TouchableOpacity>
-                                    
-                                    <TouchableOpacity 
-                                        style={styles.controlButton}
-                                        onPress={closeSheet}
-                                    >
-                                        <Text style={styles.controlButtonText}>✕</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
                         </View>
                     </View>
                 </View>
-            </Modal>
+            )}
 
             {/* Full-Screen Image Display Modal */}
             <Modal
@@ -232,27 +202,6 @@ export default function ScanRoute() {
             >
                 <View style={styles.imageModalOverlay}>
                     <View style={styles.imageModalContainer}>
-                        {displayedImageUri && (
-                            <Pressable style={styles.imagePressable} onPressIn={onPressInImage} onPressOut={onPressOutImage}>
-                                <Image 
-                                    onLayout={onImageLayout}
-                                    source={{ uri: displayedImageUri }} 
-                                    style={styles.fullScreenImage}
-                                    resizeMode="contain"
-                                />
-                                {holdPointScreen && (
-                                    <View
-                                        pointerEvents="none"
-                                        style={[
-                                            styles.holdMarker,
-                                            { left: holdPointScreen.x - 16, top: holdPointScreen.y - 16 },
-                                            isHolding ? styles.holdMarkerActive : null,
-                                        ]}
-                                    />
-                                )}
-                            </Pressable>
-                        )}
-
                         {/* Detection state overlays */}
                         {detecting && (
                             <View style={styles.detectOverlay}> 
@@ -260,75 +209,77 @@ export default function ScanRoute() {
                                 <Text style={styles.detectText}>Detecting route by colour…</Text>
                             </View>
                         )}
-                        {gradeBanner && (
-                            <View style={styles.gradeBanner}>
-                                <Text style={styles.gradeText}>{gradeBanner}</Text>
-                            </View>
-                        )}
                         {!!detectError && (
                             <View style={styles.errorBanner}>
                                 <Text style={styles.errorText}>{detectError}</Text>
                             </View>
                         )}
-                        
-                        {/* Image Controls */}
-                        <View style={styles.imageControls}>
-                            <TouchableOpacity 
-                                style={styles.imageControlButton}
-                                onPress={retakePicture}
-                            >
-                                <Text style={styles.imageControlButtonText}>Retake</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity 
-                                style={[styles.imageControlButton, styles.useImageButton]}
-                                onPress={async () => {
-                                    if (!capturedImage || !holdPointPx) return;
-                                    const params: ColourFilterRequest = {
-                                        tapX: holdPointPx.x,
-                                        tapY: holdPointPx.y,
-                                        conf: 0.25,
-                                        colourTolerance: 10,
-                                        returnAnnotatedImage: true,
-                                    };
-                                    try {
-                                        const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
-                                        // Log API response for debugging coordinate mapping and filtering
-                                        console.log('API response:', {
-                                            requestedTap: { x: params.tapX, y: params.tapY },
-                                            selected_colour: result?.selected_colour,
-                                            colour_confidence: result?.colour_confidence,
-                                            detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
-                                            image_with_boxes: result?.image_with_boxes,
-                                        });
-                                        if (result?.image_with_boxes) {
-                                            const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
-                                            const absolute = result.image_with_boxes.startsWith('http')
-                                                ? result.image_with_boxes
-                                                : `${baseUrl}${result.image_with_boxes}`;
-                                            setDisplayedImageUri(absolute);
-                                            // Re-map marker position because container may be the same; keep marker
-                                            const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
-                                            if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
 
-                                            // Kick off grade reading using the annotated image
-                                            try {
-                                                setGradeBanner('Reading route…');
-                                                const grade = await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
-                                                const text = `${grade.v_grade} (${Math.round(grade.confidence * 100)}%)`;
-                                                setGradeBanner(text);
-                                            } catch (e) {
-                                                setGradeBanner(readError || '');
+                        <ScannedRouteDisplay
+                            imageUri={displayedImageUri}
+                            gradeData={gradeData}
+                            gradeLoading={reading}
+                            gradeError={readError}
+                            isAnnotated={isAnnotatedImage}
+                            onRetake={retakePicture}
+                            onClose={() => setImageModalVisible(false)}
+                            onPressIn={onPressInImage}
+                            onPressOut={onPressOutImage}
+                            holdPointScreen={holdPointScreen}
+                            isHolding={isHolding}
+                            onImageLayout={onImageLayout}
+                        />
+
+                        {/* Scan Route Button - only show when image is not annotated */}
+                        {!detecting && displayedImageUri && !isAnnotatedImage && (
+                            <View style={styles.scanButtonContainer}>
+                                <TouchableOpacity 
+                                    style={[styles.scanButton]}
+                                    onPress={async () => {
+                                        if (!capturedImage || !holdPointPx) return;
+                                        console.log('Scan Route button pressed:', { tapX: holdPointPx.x, tapY: holdPointPx.y });
+                                        const params: ColourFilterRequest = {
+                                            tapX: holdPointPx.x,
+                                            tapY: holdPointPx.y,
+                                            conf: 0.25,
+                                            colourTolerance: 10,
+                                            returnAnnotatedImage: true,
+                                        };
+                                        try {
+                                            const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
+                                            console.log('API response:', {
+                                                requestedTap: { x: params.tapX, y: params.tapY },
+                                                selected_colour: result?.selected_colour,
+                                                colour_confidence: result?.colour_confidence,
+                                                detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
+                                                image_with_boxes: result?.image_with_boxes,
+                                            });
+                                            if (result?.image_with_boxes) {
+                                                const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
+                                                const absolute = result.image_with_boxes.startsWith('http')
+                                                    ? result.image_with_boxes
+                                                    : `${baseUrl}${result.image_with_boxes}`;
+                                                setDisplayedImageUri(absolute);
+                                                setIsAnnotatedImage(true);
+                                                const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
+                                                if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
+
+                                                // Kick off grade reading only after annotated image is set
+                                                try {
+                                                    await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
+                                                } catch (e) {
+                                                    // Error handled by hook
+                                                }
                                             }
-                                        }
-                                    } catch {}
-                                }}
-                            >
-                                <Text style={[styles.imageControlButtonText, styles.useImageButtonText]}>
-                                    {holdPointPx ? 'Scan Route' : 'Tap & Hold to Select'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                                        } catch {}
+                                    }}
+                                >
+                                    <Text style={styles.scanButtonText}>
+                                        {holdPointPx ? 'Scan Route' : 'Tap & Hold to Select'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                 </View>
             </Modal>
@@ -347,35 +298,6 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
     },
-    sheetOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    sheetBackdrop: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    sheetContainer: {
-        backgroundColor: colors.surface,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        maxHeight: '90%',
-        minHeight: '90%',
-    },
-    sheetHandle: {
-        width: 40,
-        height: 4,
-        backgroundColor: colors.border,
-        borderRadius: 2,
-        alignSelf: 'center',
-        marginTop: 12,
-        marginBottom: 20,
-    },
-    sheetContent: {
-        flex: 1,
-        paddingHorizontal: 0,
-        paddingBottom: 0,
-    },
     camera: {
         flex: 1,
     },
@@ -390,11 +312,12 @@ const styles = StyleSheet.create({
     },
     cameraControls: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 30,
         paddingBottom: 30,
         paddingTop: 20,
+        gap: 40,
     },
     controlButton: {
         width: 50,
@@ -441,52 +364,26 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    imageControls: {
+    scanButtonContainer: {
         position: 'absolute',
         bottom: 50,
         left: 0,
         right: 0,
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+        alignItems: 'center',
         paddingHorizontal: 40,
     },
-    imagePressable: {
-        flex: 1,
-        width: '100%',
-        height: '100%',
+    scanButton: {
+        backgroundColor: colors.black,
+        paddingHorizontal: 40,
+        paddingVertical: 16,
+        borderRadius: 30,
+        minWidth: 200,
+        alignItems: 'center',
     },
-    imageControlButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingHorizontal: 30,
-        paddingVertical: 15,
-        borderRadius: 25,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    imageControlButtonText: {
+    scanButtonText: {
         color: colors.white,
         fontSize: 16,
         fontWeight: '600',
-    },
-    useImageButton: {
-        backgroundColor: colors.black,
-        borderColor: colors.black,
-    },
-    useImageButtonText: {
-        color: colors.white,
-    },
-    holdMarker: {
-        position: 'absolute',
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        borderWidth: 2,
-        borderColor: colors.white,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-    },
-    holdMarkerActive: {
-        borderColor: colors.black,
-        backgroundColor: 'rgba(0,0,0,0.15)',
     },
     detectOverlay: {
         position: 'absolute',
@@ -517,19 +414,5 @@ const styles = StyleSheet.create({
         color: colors.white,
         textAlign: 'center',
         fontWeight: '600',
-    },
-    gradeBanner: {
-        position: 'absolute',
-        top: 16,
-        alignSelf: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-    },
-    gradeText: {
-        color: colors.white,
-        fontWeight: '700',
-        fontSize: 16,
     },
     });
