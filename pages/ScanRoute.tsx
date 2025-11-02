@@ -41,7 +41,7 @@ export default function ScanRoute() {
     // Detection hook
     const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
     const { loading: reading, error: readError, data: gradeData, readGrade, reset: resetRead } = useReadRouteGrade();
-    const { loading: saving, error: saveError, saveRoute } = useSaveRoute();
+    const { loading: saving, error: saveError, routeId, saveRoute, reset: resetSaveRoute } = useSaveRoute();
 
     // Store detection result for saving
     const [detectionResult, setDetectionResult] = useState<any>(null);
@@ -65,7 +65,8 @@ export default function ScanRoute() {
         resetDetection();
         resetRead();
         setDetectionResult(null);
-    }, [capturedImage, resetDetection, resetRead]);
+        resetSaveRoute(); // Reset save state when new image is captured
+    }, [capturedImage, resetDetection, resetRead, resetSaveRoute]);
 
     const onImageLayout = (e: any) => {
         setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
@@ -182,7 +183,8 @@ export default function ScanRoute() {
 
     // Save route when grade reading completes successfully
     useEffect(() => {
-        if (gradeData && detectionResult && displayedImageUri && !saving) {
+        // Only save if we have all required data, aren't currently saving, and haven't already saved this route
+        if (gradeData && detectionResult && displayedImageUri && !saving && !routeId) {
             const currentUser = AuthService.getCurrentUser();
             if (!currentUser) {
                 console.warn('Cannot save route: User not authenticated');
@@ -200,7 +202,7 @@ export default function ScanRoute() {
                 // Error is handled by hook state
             });
         }
-    }, [gradeData, detectionResult, displayedImageUri, saving, saveRoute]);
+    }, [gradeData, detectionResult, displayedImageUri, saving, routeId, saveRoute]);
 
     if (!permission) {
         // Camera permissions are still loading
