@@ -133,6 +133,49 @@ export default function ScanRoute() {
         await takePicture(cameraRef);
     };
 
+    const handleScanRoute = async () => {
+        console.log("Scan button pressed");
+        if (!capturedImage || !holdPointPx) {
+            console.log('Early return - missing:', { capturedImage: !!capturedImage, holdPointPx: !!holdPointPx });
+            return;
+        }
+        console.log('Processing scan with tap:', { tapX: holdPointPx.x, tapY: holdPointPx.y });
+        const params: ColourFilterRequest = {
+            tapX: holdPointPx.x,
+            tapY: holdPointPx.y,
+            conf: 0.25,
+            colourTolerance: 10,
+            returnAnnotatedImage: true,
+        };
+        try {
+            const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
+            console.log('API response:', {
+                requestedTap: { x: params.tapX, y: params.tapY },
+                selected_colour: result?.selected_colour,
+                colour_confidence: result?.colour_confidence,
+                detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
+                image_with_boxes: result?.image_with_boxes,
+            });
+            if (result?.image_with_boxes) {
+                const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
+                const absolute = result.image_with_boxes.startsWith('http')
+                    ? result.image_with_boxes
+                    : `${baseUrl}${result.image_with_boxes}`;
+                setDisplayedImageUri(absolute);
+                setIsAnnotatedImage(true);
+                const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
+                if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
+
+                // Kick off grade reading only after annotated image is set
+                try {
+                    await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
+                } catch (e) {
+                    // Error handled by hook
+                }
+            }
+        } catch {}
+    };
+
     if (!permission) {
         // Camera permissions are still loading
         return (
@@ -235,47 +278,10 @@ export default function ScanRoute() {
                             <View style={styles.scanButtonContainer}>
                                 <TouchableOpacity 
                                     style={[styles.scanButton]}
-                                    onPress={async () => {
-                                        if (!capturedImage || !holdPointPx) return;
-                                        console.log('Scan Route button pressed:', { tapX: holdPointPx.x, tapY: holdPointPx.y });
-                                        const params: ColourFilterRequest = {
-                                            tapX: holdPointPx.x,
-                                            tapY: holdPointPx.y,
-                                            conf: 0.25,
-                                            colourTolerance: 10,
-                                            returnAnnotatedImage: true,
-                                        };
-                                        try {
-                                            const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
-                                            console.log('API response:', {
-                                                requestedTap: { x: params.tapX, y: params.tapY },
-                                                selected_colour: result?.selected_colour,
-                                                colour_confidence: result?.colour_confidence,
-                                                detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
-                                                image_with_boxes: result?.image_with_boxes,
-                                            });
-                                            if (result?.image_with_boxes) {
-                                                const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
-                                                const absolute = result.image_with_boxes.startsWith('http')
-                                                    ? result.image_with_boxes
-                                                    : `${baseUrl}${result.image_with_boxes}`;
-                                                setDisplayedImageUri(absolute);
-                                                setIsAnnotatedImage(true);
-                                                const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
-                                                if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
-
-                                                // Kick off grade reading only after annotated image is set
-                                                try {
-                                                    await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
-                                                } catch (e) {
-                                                    // Error handled by hook
-                                                }
-                                            }
-                                        } catch {}
-                                    }}
+                                    onPress={handleScanRoute}
                                 >
                                     <Text style={styles.scanButtonText}>
-                                        {holdPointPx ? 'Scan Route' : 'Tap & Hold to Select'}
+                                        {holdPointPx ? 'Scan Route' : 'Tap to Select'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -371,6 +377,7 @@ const styles = StyleSheet.create({
         right: 0,
         alignItems: 'center',
         paddingHorizontal: 40,
+        zIndex: 100,
     },
     scanButton: {
         backgroundColor: colors.black,

@@ -55,6 +55,7 @@ export default function ScannedRouteDisplay({
           onPressOut={onPressOut}
         >
           <Image 
+            key={imageUri}
             onLayout={onImageLayout}
             source={{ uri: imageUri }} 
             style={styles.fullScreenImage}
