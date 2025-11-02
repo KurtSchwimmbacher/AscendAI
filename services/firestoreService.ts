@@ -6,6 +6,9 @@ import {
   updateDoc,
   serverTimestamp,
   FirestoreError,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { FirestoreRouteDocument } from '../types/routeData';
@@ -170,18 +173,49 @@ export class FirestoreService {
   /**
    * Get all routes for a user
    * @param userId - User ID
-   * @returns Promise resolving to array of route documents
+   * @returns Promise resolving to array of route documents sorted by createdAt (newest first)
    */
   static async getUserRoutes(userId: string): Promise<FirestoreRouteDocument[]> {
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
       const routesRef = collection(db, this.ROUTES_COLLECTION);
-      // Note: For querying, you would need to use query() and where()
-      // For now, this is a placeholder - you can implement querying later
-      // using: query(routesRef, where('userId', '==', userId), orderBy('createdAt', 'desc'))
-      
-      // This method will need query() import and implementation
-      // Leaving as placeholder for now
-      throw new Error('getUserRoutes not yet implemented. Use query() with where() clause.');
+      // Query without orderBy to avoid requiring a composite index
+      // We'll sort client-side instead
+      const q = query(routesRef, where('userId', '==', userId));
+
+      const querySnapshot = await getDocs(q);
+      const routes: FirestoreRouteDocument[] = [];
+
+      querySnapshot.forEach((doc) => {
+        routes.push({
+          id: doc.id,
+          ...doc.data(),
+        } as FirestoreRouteDocument);
+      });
+
+      // Sort client-side by timestamp (newest first)
+      // Handle both Firestore Timestamp and number timestamps
+      routes.sort((a, b) => {
+        const getTimestamp = (route: FirestoreRouteDocument): number => {
+          // If createdAt is a Firestore Timestamp, convert to number
+          if (route.createdAt && typeof route.createdAt === 'object' && 'toMillis' in route.createdAt) {
+            return (route.createdAt as any).toMillis();
+          }
+          // If createdAt is a number (seconds), convert to milliseconds
+          if (typeof route.createdAt === 'number') {
+            return route.createdAt * 1000;
+          }
+          // Fall back to route.timestamp if available
+          return route.timestamp || 0;
+        };
+
+        return getTimestamp(b) - getTimestamp(a); // Descending order (newest first)
+      });
+
+      return routes;
     } catch (error) {
       throw this.handleFirestoreError(error as FirestoreError);
     }

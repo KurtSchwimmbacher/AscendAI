@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
-import HomeScreen from '../pages/HomeScreen';
+import HomeStack from './HomeStack';
 import ScanRoute from '../pages/ScanRoute';
 import ProfileScreen from '../pages/ProfileScreen';
 
@@ -13,6 +13,9 @@ export type MainTabParamList = {
   ScanRoute: undefined;
   Profile: undefined;
 };
+
+// Export HomeStack types for navigation
+export type { HomeStackParamList } from './HomeStack';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -35,7 +38,7 @@ export default function MainTabs() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStack}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />

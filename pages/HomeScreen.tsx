@@ -11,14 +11,24 @@ import { colors, globalStyles } from '../styles/globalStyles';
 import { AuthService } from '../services/authService';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { MainTabParamList } from '../navigation/MainTabs';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainTabParamList, HomeStackParamList } from '../navigation/MainTabs';
+import { CompositeNavigationProp } from '@react-navigation/native';
 
-type HomeScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Home'>;
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  StackNavigationProp<HomeStackParamList, 'HomeMain'>,
+  BottomTabNavigationProp<MainTabParamList, 'Home'>
+>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const handleScanRoute = () => {
-    navigation.navigate('ScanRoute');
+    // Navigate to ScanRoute tab
+    (navigation as any).navigate('ScanRoute');
+  };
+  
+  const handlePastRoutes = () => {
+    navigation.navigate('PastRoutes');
   };
 
 
@@ -51,9 +61,7 @@ export default function HomeScreen() {
         {/* past routes btn */}
         <TouchableOpacity 
           style={[globalStyles.buttonFullWidthDanger, styles.scanButton]} 
-          onPress={ () =>
-            console.log('Past routes')
-          }
+          onPress={handlePastRoutes}
         >
           <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>Past Scans</Text>
           <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite, styles.arrowIcon]}>→</Text>

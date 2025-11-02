@@ -33,6 +33,7 @@ export interface RouteScanData {
  * Route document as stored in Firestore
  */
 export interface FirestoreRouteDocument extends Omit<RouteScanData, 'createdAt'> {
+  id?: string; // Document ID
   createdAt: any; // Firestore timestamp
   updatedAt?: any; // Firestore timestamp
 }
