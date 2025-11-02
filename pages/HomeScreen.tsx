@@ -21,13 +21,7 @@ export default function HomeScreen() {
     navigation.navigate('ScanRoute');
   };
 
-  const handleSignOut = async () => {
-    try {
-      await AuthService.signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
+
 
   return (
     <SafeAreaView style={globalStyles.container}>
@@ -54,12 +48,15 @@ export default function HomeScreen() {
           <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite, styles.arrowIcon]}>→</Text>
         </TouchableOpacity>
         
-        {/* Sign Out Button */}
+        {/* past routes btn */}
         <TouchableOpacity 
-          style={[globalStyles.buttonFullWidthDanger]} 
-          onPress={handleSignOut}
+          style={[globalStyles.buttonFullWidthDanger, styles.scanButton]} 
+          onPress={ () =>
+            console.log('Past routes')
+          }
         >
-          <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>Sign Out</Text>
+          <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>Past Scans</Text>
+          <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite, styles.arrowIcon]}>→</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -93,7 +90,7 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 20,

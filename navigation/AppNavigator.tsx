@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
@@ -22,6 +22,7 @@ type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,6 +60,31 @@ export default function AppNavigator() {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
+
+  // Reset navigation when auth state changes
+  useEffect(() => {
+    if (!isLoading && !isCheckingOnboarding && navigationRef.current?.isReady()) {
+      if (!isAuthenticated) {
+        // User logged out - navigate to Auth screen
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }],
+        });
+      } else if (needsOnboarding) {
+        // User needs onboarding
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Onboarding' }],
+        });
+      } else if (isAuthenticated && !needsOnboarding) {
+        // User is authenticated and onboarded - navigate to MainTabs
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
+      }
+    }
+  }, [isAuthenticated, needsOnboarding, isLoading, isCheckingOnboarding]);
 
   // Show loading screen while checking authentication or onboarding status
   if (isLoading || isCheckingOnboarding) {
@@ -127,7 +153,7 @@ export default function AppNavigator() {
   const navigationKey = `${isAuthenticated}-${needsOnboarding}`;
 
   return (
-    <NavigationContainer> 
+    <NavigationContainer ref={navigationRef}> 
       <Stack.Navigator 
         key={navigationKey}
         id={undefined}
