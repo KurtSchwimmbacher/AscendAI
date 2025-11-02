@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { globalStyles, colors } from '../../styles/globalStyles';
+import { StorageService } from '../../services/storageService';
+import { AuthService } from '../../services/authService';
 
 interface ProfilePictureScreenProps {
   value: string;
@@ -29,30 +33,128 @@ export default function ProfilePictureScreen({
   totalSteps 
 }: ProfilePictureScreenProps) {
   const [profilePictureUrl, setProfilePictureUrl] = useState(value);
-  const [isValid, setIsValid] = useState(false);
+  const [isValid, setIsValid] = useState(!!value);
+  const [uploading, setUploading] = useState(false);
+  const [localImageUri, setLocalImageUri] = useState<string | null>(value || null);
 
-  const handleTakePhoto = () => {
-    // TODO: Implement camera functionality
-    Alert.alert(
-      'Camera',
-      'Camera functionality will be implemented here. For now, you can skip this step.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip', onPress: handleSkip },
-      ]
-    );
+  const requestPermissions = async () => {
+    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (cameraStatus !== 'granted' || mediaStatus !== 'granted') {
+      Alert.alert(
+        'Permissions Required',
+        'We need access to your camera and photo library to add a profile picture.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
   };
 
-  const handleChooseFromLibrary = () => {
-    // TODO: Implement image picker functionality
-    Alert.alert(
-      'Photo Library',
-      'Photo library functionality will be implemented here. For now, you can skip this step.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip', onPress: handleSkip },
-      ]
+  const uploadImageToStorage = async (imageUri: string): Promise<string> => {
+    const currentUser = AuthService.getCurrentUser();
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Generate unique filename
+    const filename = `profile_${currentUser.uid}_${Date.now()}.jpg`;
+    
+    // Upload to Firebase Storage
+    const downloadURL = await StorageService.uploadProfilePicture(
+      imageUri,
+      currentUser.uid,
+      filename
     );
+
+    return downloadURL;
+  };
+
+  const handleTakePhoto = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        setLocalImageUri(uri);
+        setIsValid(true);
+        
+        // Upload to Firebase Storage
+        setUploading(true);
+        try {
+          const downloadURL = await uploadImageToStorage(uri);
+          setProfilePictureUrl(downloadURL);
+        } catch (error) {
+          Alert.alert(
+            'Upload Failed',
+            error instanceof Error ? error.message : 'Failed to upload image. Please try again.',
+            [{ text: 'OK' }]
+          );
+          setLocalImageUri(null);
+          setIsValid(false);
+        } finally {
+          setUploading(false);
+        }
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to open camera. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        setLocalImageUri(uri);
+        setIsValid(true);
+        
+        // Upload to Firebase Storage
+        setUploading(true);
+        try {
+          const downloadURL = await uploadImageToStorage(uri);
+          setProfilePictureUrl(downloadURL);
+        } catch (error) {
+          Alert.alert(
+            'Upload Failed',
+            error instanceof Error ? error.message : 'Failed to upload image. Please try again.',
+            [{ text: 'OK' }]
+          );
+          setLocalImageUri(null);
+          setIsValid(false);
+        } finally {
+          setUploading(false);
+        }
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to open photo library. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleNext = () => {
@@ -91,8 +193,15 @@ export default function ProfilePictureScreen({
         {/* Profile picture preview */}
         <View style={styles.pictureContainer}>
           <View style={styles.avatarContainer}>
-            {profilePictureUrl ? (
-              <Image source={{ uri: profilePictureUrl }} style={styles.avatar} />
+            {uploading ? (
+              <View style={styles.uploadingContainer}>
+                <ActivityIndicator size="large" color={colors.black} />
+                <Text style={[globalStyles.textBodySmall, { marginTop: 12 }]}>
+                  Uploading...
+                </Text>
+              </View>
+            ) : localImageUri ? (
+              <Image source={{ uri: localImageUri }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <Text style={styles.avatarText}>?</Text>
@@ -104,8 +213,13 @@ export default function ProfilePictureScreen({
         {/* Action buttons */}
         <View style={styles.actions}>
           <TouchableOpacity 
-            style={[globalStyles.buttonFullWidth, styles.actionButton]}
+            style={[
+              globalStyles.buttonFullWidth, 
+              styles.actionButton,
+              uploading && styles.buttonDisabled
+            ]}
             onPress={handleTakePhoto}
+            disabled={uploading}
           >
             <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>
               📷 Take Photo
@@ -113,13 +227,29 @@ export default function ProfilePictureScreen({
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[globalStyles.buttonFullWidthSecondary, styles.actionButton]}
+            style={[
+              globalStyles.buttonFullWidthSecondary, 
+              styles.actionButton,
+              uploading && styles.buttonDisabled
+            ]}
             onPress={handleChooseFromLibrary}
+            disabled={uploading}
           >
             <Text style={[globalStyles.textButtonLarge, globalStyles.textPrimary]}>
               🖼️ Choose from Library
             </Text>
           </TouchableOpacity>
+
+          {isValid && !uploading && (
+            <TouchableOpacity 
+              style={[globalStyles.buttonFullWidth, styles.actionButton, styles.continueButton]}
+              onPress={handleNext}
+            >
+              <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>
+                Continue
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Skip option */}
@@ -187,6 +317,20 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginBottom: 0,
+  },
+  continueButton: {
+    marginTop: 8,
+    backgroundColor: colors.success,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  uploadingContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.border,
   },
   skipContainer: {
     alignItems: 'center',

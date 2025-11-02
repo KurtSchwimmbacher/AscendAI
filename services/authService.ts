@@ -2,6 +2,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  deleteUser as firebaseDeleteUser,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   User,
   AuthError,
@@ -34,6 +35,19 @@ export class AuthService {
   static async signOut(): Promise<void> {
     try {
       await firebaseSignOut(auth);
+    } catch (error) {
+      throw this.handleAuthError(error as AuthError);
+    }
+  }
+
+  // Delete the current user account
+  static async deleteUser(): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user is currently signed in');
+      }
+      await firebaseDeleteUser(user);
     } catch (error) {
       throw this.handleAuthError(error as AuthError);
     }
@@ -91,6 +105,7 @@ export const {
   signUp,
   signIn,
   signOut,
+  deleteUser,
   getCurrentUser,
   onAuthStateChanged,
 } = AuthService;

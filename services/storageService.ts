@@ -2,6 +2,8 @@ import {
   ref,
   uploadBytes,
   getDownloadURL,
+  deleteObject,
+  listAll,
   StorageError,
   UploadResult,
 } from 'firebase/storage';
@@ -9,10 +11,71 @@ import { storage } from './firebase';
 
 /**
  * Storage Service - Handles all Firebase Storage operations
- * Single Responsibility: File upload/download operations
  */
 export class StorageService {
   private static readonly ROUTES_PATH = 'routes';
+  private static readonly PROFILES_PATH = 'profiles';
+
+  /**
+   * Uploads a profile picture to Firebase Storage
+   * @param imageUri - URI of the image (local file or remote URL)
+   * @param userId - User ID for organizing files
+   * @param filename - Optional custom filename, otherwise auto-generated
+   * @returns Promise resolving to the download URL
+   */
+  static async uploadProfilePicture(
+    imageUri: string,
+    userId: string,
+    filename?: string,
+  ): Promise<string> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      if (!imageUri) {
+        throw new Error('Image URI is required');
+      }
+
+      // Generate filename if not provided
+      const finalFilename =
+        filename ||
+        `profile_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.jpg`;
+
+      // Create storage reference
+      const storageRef = ref(
+        storage,
+        `${this.PROFILES_PATH}/${userId}/${finalFilename}`,
+      );
+
+      // Fetch image from URI (works for both local and remote)
+      const response = await fetch(imageUri);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      // Convert to blob
+      const blob = await response.blob();
+
+      // Upload to Firebase Storage
+      const uploadResult: UploadResult = await uploadBytes(
+        storageRef,
+        blob,
+        {
+          contentType: 'image/jpeg',
+        },
+      );
+
+      // Get download URL
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      return downloadURL;
+    } catch (error) {
+      throw this.handleStorageError(error as StorageError | Error);
+    }
+  }
 
   /**
    * Uploads a route image to Firebase Storage
@@ -70,6 +133,52 @@ export class StorageService {
       const downloadURL = await getDownloadURL(uploadResult.ref);
 
       return downloadURL;
+    } catch (error) {
+      throw this.handleStorageError(error as StorageError | Error);
+    }
+  }
+
+  /**
+   * Deletes a user's profile picture from Firebase Storage
+   * @param userId - User ID
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteProfilePicture(userId: string): Promise<void> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      // List all files in the user's profile folder
+      const folderRef = ref(storage, `${this.PROFILES_PATH}/${userId}`);
+      const listResult = await listAll(folderRef);
+
+      // Delete all files in the folder
+      const deletePromises = listResult.items.map((item) => deleteObject(item));
+      await Promise.all(deletePromises);
+    } catch (error) {
+      throw this.handleStorageError(error as StorageError | Error);
+    }
+  }
+
+  /**
+   * Deletes all route images for a user from Firebase Storage
+   * @param userId - User ID
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteUserRoutes(userId: string): Promise<void> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      // List all files in the user's routes folder
+      const folderRef = ref(storage, `${this.ROUTES_PATH}/${userId}`);
+      const listResult = await listAll(folderRef);
+
+      // Delete all files in the folder
+      const deletePromises = listResult.items.map((item) => deleteObject(item));
+      await Promise.all(deletePromises);
     } catch (error) {
       throw this.handleStorageError(error as StorageError | Error);
     }

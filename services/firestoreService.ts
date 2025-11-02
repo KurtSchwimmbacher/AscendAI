@@ -4,6 +4,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   FirestoreError,
   query,
@@ -21,6 +22,7 @@ export interface UserProfile {
   dateOfBirth?: string;
   profilePictureUrl?: string;
   phoneNumber?: string;
+  username?: string;
   isOnboardingComplete: boolean;
   createdAt: any; // Firestore timestamp
   updatedAt: any; // Firestore timestamp
@@ -165,6 +167,48 @@ export class FirestoreService {
         return routeDoc.data() as FirestoreRouteDocument;
       }
       return null;
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
+   * Delete user profile from Firestore
+   * @param userId - User ID
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteUserProfile(userId: string): Promise<void> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const userRef = doc(db, this.USERS_COLLECTION, userId);
+      await deleteDoc(userRef);
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  /**
+   * Delete all routes for a user from Firestore
+   * @param userId - User ID
+   * @returns Promise resolving when deletion is complete
+   */
+  static async deleteUserRoutes(userId: string): Promise<void> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const routesRef = collection(db, this.ROUTES_COLLECTION);
+      const q = query(routesRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+
+      const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+        deleteDoc(docSnapshot.ref)
+      );
+      await Promise.all(deletePromises);
     } catch (error) {
       throw this.handleFirestoreError(error as FirestoreError);
     }

@@ -6,12 +6,14 @@ import { globalStyles } from '../../styles/globalStyles';
 import FullNameScreen from './FullNameScreen';
 import DateOfBirthScreen from './DateOfBirthScreen';
 import PhoneNumberScreen from './PhoneNumberScreen';
+import UsernameScreen from './UsernameScreen';
 import ProfilePictureScreen from './ProfilePictureScreen';
 
 export interface OnboardingData {
   fullName: string;
   dateOfBirth: string;
   phoneNumber: string;
+  username: string;
   profilePictureUrl: string;
 }
 
@@ -28,7 +30,8 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
     { component: FullNameScreen, key: 'fullName' },
     { component: DateOfBirthScreen, key: 'dateOfBirth' },
     { component: PhoneNumberScreen, key: 'phoneNumber' },
-    { component: ProfilePictureScreen, key: 'profilePicture' },
+    { component: UsernameScreen, key: 'username' },
+    { component: ProfilePictureScreen, key: 'profilePictureUrl' },
   ];
 
   const handleNext = (field: keyof OnboardingData, value: string) => {
