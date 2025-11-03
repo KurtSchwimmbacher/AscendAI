@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AscendApp",
-    "slug": "AscendApp",
+    "name": "AscendAI",
+    "slug": "AscendAI",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#DEDEDE"
     },
     "ios": {
       "supportsTablet": true

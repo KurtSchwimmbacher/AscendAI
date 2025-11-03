@@ -222,7 +222,7 @@ export default function ProfilePictureScreen({
             disabled={uploading}
           >
             <Text style={[globalStyles.textButtonLarge, globalStyles.textWhite]}>
-              📷 Take Photo
+              Take Photo
             </Text>
           </TouchableOpacity>
 
@@ -236,7 +236,7 @@ export default function ProfilePictureScreen({
             disabled={uploading}
           >
             <Text style={[globalStyles.textButtonLarge, globalStyles.textPrimary]}>
-              🖼️ Choose from Library
+              Choose from Library
             </Text>
           </TouchableOpacity>
 
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     marginTop: 8,
-    backgroundColor: colors.success,
+    backgroundColor: colors.black,
   },
   buttonDisabled: {
     opacity: 0.5,
