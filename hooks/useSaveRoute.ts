@@ -1,11 +1,34 @@
 import { useCallback, useState } from 'react';
-import { saveRouteScan } from '../services/routeService';
+import { RouteService } from '../services/routeService';
 import { SaveRouteParams } from '../types/routeData';
+import { FirestoreRouteDocument } from '../types/routeData';
 
 export interface UseSaveRouteState {
   loading: boolean;
   error: string | null;
   routeId: string | null;
+}
+
+/**
+ * Transform SaveRouteParams to FirestoreRouteDocument format
+ */
+function transformSaveParams(params: SaveRouteParams): Omit<FirestoreRouteDocument, 'createdAt' | 'updatedAt'> {
+  return {
+    userId: params.userId,
+    imageUrl: params.annotatedImageUrl,
+    imagePath: params.annotatedImageUrl, // Use URL as path for now
+    grade: params.gradeData,
+    detection: {
+      tap_x: params.detectionData.tap_x || 0,
+      tap_y: params.detectionData.tap_y || 0,
+      selected_colour: params.detectionData.selected_colour || '',
+      colour_confidence: params.detectionData.colour_confidence || 0,
+      detections_count: Array.isArray(params.detectionData.detections) 
+        ? params.detectionData.detections.length 
+        : 0,
+    },
+    timestamp: Date.now(),
+  };
 }
 
 /**
@@ -22,7 +45,8 @@ export function useSaveRoute() {
   const saveRoute = useCallback(async (params: SaveRouteParams) => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      const routeId = await saveRouteScan(params);
+      const routeData = transformSaveParams(params);
+      const routeId = await RouteService.saveRoute(routeData);
       setState({ loading: false, error: null, routeId });
       return routeId;
     } catch (err) {
