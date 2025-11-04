@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { AuthService } from '../services/authService';
-import { FirestoreService, UserProfile } from '../services/firestoreService';
-import { StorageService } from '../services/storageService';
+import { UserProfile } from '../services/firestoreService';
+import ProfileField from '../components/ProfileField';
+import { useProfileManagement } from '../hooks/useProfileManagement';
+import { useProfileImageUpload } from '../hooks/useProfileImageUpload';
+import { useAccountDeletion } from '../hooks/useAccountDeletion';
 
 const handleSignOut = async () => {
   try {
@@ -16,182 +18,49 @@ const handleSignOut = async () => {
   }
 };
 
-interface ProfileFieldProps {
-  icon: string;
-  label: string;
-  value: string | undefined;
-  editable?: boolean;
-  onChangeText?: (text: string) => void;
-  placeholder?: string;
-}
-
-const ProfileField: React.FC<ProfileFieldProps> = ({ icon, label, value, editable, onChangeText, placeholder }) => {
-  return (
-    <View style={styles.fieldContainer}>
-      <View style={styles.fieldIcon}>
-        <Ionicons name={icon as any} size={20} color={colors.black} />
-      </View>
-      <View style={styles.fieldContent}>
-        <Text style={[globalStyles.textCaption, globalStyles.textMuted]}>{label}</Text>
-        {editable && onChangeText ? (
-          <TextInput
-            style={[globalStyles.input, styles.editableInput]}
-            value={value || ''}
-            onChangeText={onChangeText}
-            placeholder={placeholder}
-            placeholderTextColor={colors.textMuted}
-          />
-        ) : (
-          <Text style={[globalStyles.textBody, globalStyles.textPrimary]}>{value || '—'}</Text>
-        )}
-      </View>
-    </View>
-  );
-};
-
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<Partial<UserProfile>>({});
-  const [uploadingPicture, setUploadingPicture] = useState(false);
   const currentUser = AuthService.getCurrentUser();
+  
+  // Profile management hook
+  const {
+    profile,
+    loading,
+    error,
+    isEditing,
+    editData,
+    saving,
+    deleting: profileDeleting,
+    loadProfile,
+    handleEdit,
+    handleCancelEdit,
+    handleUpdateField,
+    handleSaveProfile,
+    handleDeleteAccount,
+  } = useProfileManagement();
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  // Account deletion hook
+  const { deleting: accountDeleting, deleteAccount } = useAccountDeletion();
 
-  const loadProfile = async () => {
-    if (!currentUser) {
-      setError('Not authenticated');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      const userProfile = await FirestoreService.getUserProfile(currentUser.uid);
-      setProfile(userProfile);
-      setEditData(userProfile || {});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profile');
-      console.error('Error loading profile:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = () => {
-    if (profile) {
-      setEditData({ ...profile });
-      setIsEditing(true);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditData(profile || {});
-  };
-
-  const handleUpdateField = (field: keyof UserProfile, value: string) => {
-    setEditData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveProfile = async () => {
-    if (!currentUser || !profile) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      await FirestoreService.createOrUpdateUserProfile({
-        uid: currentUser.uid,
-        email: currentUser.email || profile.email,
-        ...editData,
-      });
-
-      await loadProfile();
-      setIsEditing(false);
-      Alert.alert('Success', 'Profile updated successfully');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update profile';
-      setError(message);
-      Alert.alert('Error', message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleChangeProfilePicture = async () => {
-    if (!currentUser) return;
-
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setUploadingPicture(true);
-        try {
-          const filename = `profile_${currentUser.uid}_${Date.now()}.jpg`;
-          const downloadURL = await StorageService.uploadProfilePicture(
-            result.assets[0].uri,
-            currentUser.uid,
-            filename
-          );
-
-          // Update profile picture
-          setEditData((prev) => ({ ...prev, profilePictureUrl: downloadURL }));
-          if (!isEditing) {
-            // If not in edit mode, save immediately
-            await FirestoreService.createOrUpdateUserProfile({
-              uid: currentUser.uid,
-              email: currentUser.email || profile?.email || '',
-              ...profile,
-              profilePictureUrl: downloadURL,
-            });
-            await loadProfile();
-            Alert.alert('Success', 'Profile picture updated successfully');
-          }
-        } catch (error) {
-          Alert.alert(
-            'Upload Failed',
-            error instanceof Error ? error.message : 'Failed to upload image. Please try again.'
-          );
-        } finally {
-          setUploadingPicture(false);
-        }
+  // Profile image upload hook
+  const { uploadingPicture, uploadProfilePicture } = useProfileImageUpload({
+    currentUserId: currentUser?.uid || '',
+    currentUserEmail: currentUser?.email || '',
+    profile,
+    isEditing,
+    onImageUploaded: (imageUrl) => {
+      handleUpdateField('profilePictureUrl', imageUrl);
+      if (!isEditing && profile) {
+        // Save immediately if not in edit mode
+        handleSaveProfile();
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to open photo library. Please try again.');
-    }
-  };
+    },
+    onProfileUpdated: loadProfile,
+  });
 
-  const requestPermissions = async () => {
-    const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (mediaStatus !== 'granted') {
-      Alert.alert(
-        'Permissions Required',
-        'We need access to your photo library to change your profile picture.',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-    return true;
-  };
+  const deleting = profileDeleting || accountDeleting;
 
-  const handleDeleteAccount = () => {
+  // Handle account deletion with confirmation
+  const handleDeleteAccountConfirmed = () => {
     Alert.alert(
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone and will permanently delete:\n\n• Your profile\n• All your routes\n• All your images\n\nYou will be signed out and returned to the login screen.',
@@ -200,35 +69,10 @@ export default function ProfileScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: confirmDeleteAccount,
+          onPress: deleteAccount,
         },
       ]
     );
-  };
-
-  const confirmDeleteAccount = async () => {
-    if (!currentUser) return;
-
-    try {
-      setDeleting(true);
-      const userId = currentUser.uid;
-
-      // Delete user data (in parallel)
-      await Promise.all([
-        FirestoreService.deleteUserProfile(userId),
-        FirestoreService.deleteUserRoutes(userId),
-        StorageService.deleteProfilePicture(userId),
-        StorageService.deleteUserRoutes(userId),
-      ]);
-
-      // Delete Firebase Auth account (this will trigger navigation via AppNavigator)
-      await AuthService.deleteUser();
-    } catch (err) {
-      setDeleting(false);
-      const message = err instanceof Error ? err.message : 'Failed to delete account';
-      Alert.alert('Error', message);
-      console.error('Error deleting account:', err);
-    }
   };
 
   if (loading) {
@@ -305,7 +149,7 @@ export default function ProfileScreen() {
           <View style={styles.header}>
             <TouchableOpacity 
               style={styles.avatarContainer}
-              onPress={isEditing ? handleChangeProfilePicture : undefined}
+              onPress={isEditing ? uploadProfilePicture : undefined}
               disabled={!isEditing || uploadingPicture}
             >
               {uploadingPicture ? (
@@ -328,7 +172,7 @@ export default function ProfileScreen() {
             {isEditing && (
               <TouchableOpacity 
                 style={styles.changePictureButton}
-                onPress={handleChangeProfilePicture}
+                onPress={uploadProfilePicture}
                 disabled={uploadingPicture}
               >
                 <Text style={[globalStyles.textBodySmall, { color: colors.black }]}>
@@ -403,7 +247,7 @@ export default function ProfileScreen() {
                 styles.actionButton,
                 deleting && styles.buttonDisabled
               ]} 
-              onPress={handleDeleteAccount}
+              onPress={handleDeleteAccountConfirmed}
               disabled={saving || deleting}
             >
               {deleting ? (

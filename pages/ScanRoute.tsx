@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { globalStyles, colors } from '../styles/globalStyles';
@@ -7,13 +7,11 @@ import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../navigation/MainTabs';
 import { useCamera } from '../services/cameraService';
-import { useDetectRouteByColour, type ColourFilterRequest } from '../hooks/detectRouteHook';
-import { useReadRouteGrade } from '../hooks/readHook';
-import { useSaveRoute } from '../hooks/useSaveRoute';
-import { AuthService } from '../services/authService';
-import Constants from 'expo-constants';
 import ScannedRouteDisplay from '../components/ScannedRouteDisplay';
 import RouteDetectionOverlay from '../components/RouteDetectionOverlay';
+import CameraPermissionScreen from '../components/CameraPermissionScreen';
+import { useImageCoordinateMapping, loadImageSize } from '../hooks/useImageCoordinateMapping';
+import { useRouteScanning } from '../hooks/useRouteScanning';
 
 type ScanRouteNavigationProp = BottomTabNavigationProp<MainTabParamList, 'ScanRoute'>;
 
@@ -27,210 +25,73 @@ export default function ScanRoute() {
     const {
         capturedImage,
         imageModalVisible,
-        cameraSheetVisible: sheetVisible,
         takePicture,
         retakePicture,
-        useImage,
         setImageModalVisible,
-        setCameraSheetVisible: setSheetVisible,
     } = useCamera((imageUri: string) => {
-        // TODO: Scan route function after user touch point
         navigation.goBack();
     });
 
-    // Detection hook
-    const { loading: detecting, error: detectError, data: detectData, runDetection, reset: resetDetection } = useDetectRouteByColour();
-    const { loading: reading, error: readError, data: gradeData, readGrade, reset: resetRead } = useReadRouteGrade();
-    const { loading: saving, error: saveError, routeId, saveRoute, reset: resetSaveRoute } = useSaveRoute();
+    // Coordinate mapping hook
+    const {
+        imageSize,
+        setImageSize,
+        onImageLayout,
+        mapTapToImagePixels,
+        mapImagePixelsToScreen,
+    } = useImageCoordinateMapping();
 
-    // Store detection result for saving
-    const [detectionResult, setDetectionResult] = useState<any>(null);
-
-    // Track the displayed image dimensions and original pixel size for precise tap mapping
-    const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
-    const [displayedImageUri, setDisplayedImageUri] = useState<string | null>(null);
-    const [isAnnotatedImage, setIsAnnotatedImage] = useState(false);
-
-    // Load intrinsic size when a new image is captured
+    // Load image size when captured
     useEffect(() => {
         if (!capturedImage) return;
-        Image.getSize(
-            capturedImage,
-            (w, h) => setImageSize({ width: w, height: h }),
-            () => setImageSize(null)
-        );
-        setDisplayedImageUri(capturedImage);
-        setIsAnnotatedImage(false);
-        resetDetection();
-        resetRead();
-        setDetectionResult(null);
-        resetSaveRoute(); // Reset save state when new image is captured
-    }, [capturedImage, resetDetection, resetRead, resetSaveRoute]);
+        loadImageSize(capturedImage)
+            .then(setImageSize)
+            .catch(() => setImageSize(null));
+    }, [capturedImage, setImageSize]);
 
-    const onImageLayout = (e: any) => {
-        setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
+    // Route scanning hook
+    const {
+        displayedImageUri,
+        isAnnotatedImage,
+        holdPointScreen,
+        isHolding,
+        holdPointPx,
+        detecting,
+        detectError,
+        reading,
+        readError,
+        gradeData,
+        scanRoute,
+        handlePressIn,
+        handlePressOut,
+    } = useRouteScanning({
+        capturedImage,
+        mapImagePixelsToScreen,
+    });
+
+    const handleGoBack = () => {
+        navigation.goBack();
     };
 
-    const mapTapToImagePixels = (tapX: number, tapY: number) => {
-        if (!imageSize) return null;
-        const { width: cw, height: ch } = containerSize;
-        const { width: iw, height: ih } = imageSize;
-        if (cw <= 0 || ch <= 0 || iw <= 0 || ih <= 0) return null;
-
-        const scale = Math.min(cw / iw, ch / ih);
-        const renderedW = iw * scale;
-        const renderedH = ih * scale;
-        const offsetX = (cw - renderedW) / 2;
-        const offsetY = (ch - renderedH) / 2;
-
-        // If tapped outside the actual rendered image area, ignore
-        if (tapX < offsetX || tapX > offsetX + renderedW || tapY < offsetY || tapY > offsetY + renderedH) {
-            return null;
-        }
-
-        const px = Math.round((tapX - offsetX) / scale);
-        const py = Math.round((tapY - offsetY) / scale);
-        return { x: px, y: py };
-    };
-
-    // Press-and-hold selection state
-    const [isHolding, setIsHolding] = useState(false);
-    const [holdPointPx, setHoldPointPx] = useState<{ x: number; y: number } | null>(null);
-    const [holdPointScreen, setHoldPointScreen] = useState<{ x: number; y: number } | null>(null);
-
-    const mapImagePixelsToScreen = (px: number, py: number) => {
-        if (!imageSize) return null;
-        const { width: cw, height: ch } = containerSize;
-        const { width: iw, height: ih } = imageSize;
-        const scale = Math.min(cw / iw, ch / ih);
-        const renderedW = iw * scale;
-        const renderedH = ih * scale;
-        const offsetX = (cw - renderedW) / 2;
-        const offsetY = (ch - renderedH) / 2;
-        return { sx: offsetX + px * scale, sy: offsetY + py * scale };
+    const handleTakePicture = async () => {
+        await takePicture(cameraRef);
     };
 
     const onPressInImage = (e: any) => {
         if (!imageSize) return;
         const { locationX, locationY } = e.nativeEvent;
         const mapped = mapTapToImagePixels(locationX, locationY);
-        if (!mapped) return;
-        const screen = mapImagePixelsToScreen(mapped.x, mapped.y);
-        setIsHolding(true);
-        setHoldPointPx(mapped);
-        if (screen) setHoldPointScreen({ x: screen.sx, y: screen.sy });
-    };
-
-    const onPressOutImage = () => {
-        setIsHolding(false);
-    };
-
-    const handleGoBack = () => {
-        navigation.goBack();
-    };
-
-
-    const handleTakePicture = async () => {
-        await takePicture(cameraRef);
-    };
-
-    const handleScanRoute = async () => {
-        console.log("Scan button pressed");
-        if (!capturedImage || !holdPointPx) {
-            console.log('Early return - missing:', { capturedImage: !!capturedImage, holdPointPx: !!holdPointPx });
-            return;
+        if (mapped) {
+            handlePressIn(locationX, locationY, mapped);
         }
-        console.log('Processing scan with tap:', { tapX: holdPointPx.x, tapY: holdPointPx.y });
-        const params: ColourFilterRequest = {
-            tapX: holdPointPx.x,
-            tapY: holdPointPx.y,
-            conf: 0.25,
-            colourTolerance: 10,
-            returnAnnotatedImage: true,
-        };
-        try {
-            const result = await runDetection({ uri: capturedImage, name: 'photo.jpg', type: 'image/jpeg' }, params);
-            console.log('API response:', {
-                requestedTap: { x: params.tapX, y: params.tapY },
-                selected_colour: result?.selected_colour,
-                colour_confidence: result?.colour_confidence,
-                detectionsCount: Array.isArray(result?.detections) ? result.detections.length : 0,
-                image_with_boxes: result?.image_with_boxes,
-            });
-            if (result?.image_with_boxes) {
-                const baseUrl = Constants.expoConfig?.extra?.API_URL || 'https://ascendbackend-b2f7.onrender.com';
-                const absolute = result.image_with_boxes.startsWith('http')
-                    ? result.image_with_boxes
-                    : `${baseUrl}${result.image_with_boxes}`;
-                setDisplayedImageUri(absolute);
-                setIsAnnotatedImage(true);
-                const s = mapImagePixelsToScreen(holdPointPx.x, holdPointPx.y);
-                if (s) setHoldPointScreen({ x: s.sx, y: s.sy });
-
-                // Store detection result for saving later
-                setDetectionResult(result);
-
-                // Kick off grade reading only after annotated image is set
-                try {
-                    await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
-                } catch (e) {
-                    // Error handled by hook
-                }
-            }
-        } catch {}
     };
 
-    // Save route when grade reading completes successfully
-    useEffect(() => {
-        // Only save if we have all required data, aren't currently saving, and haven't already saved this route
-        if (gradeData && detectionResult && displayedImageUri && !saving && !routeId) {
-            const currentUser = AuthService.getCurrentUser();
-            if (!currentUser) {
-                console.warn('Cannot save route: User not authenticated');
-                return;
-            }
-
-            // Save route asynchronously (don't await - let it run in background)
-            saveRoute({
-                userId: currentUser.uid,
-                annotatedImageUrl: displayedImageUri,
-                gradeData: gradeData,
-                detectionData: detectionResult,
-            }).catch((error) => {
-                console.error('Failed to save route:', error);
-                // Error is handled by hook state
-            });
+    if (!permission || !permission.granted) {
+        // Request permission automatically if not granted
+        if (permission && !permission.granted) {
+            requestPermission();
         }
-    }, [gradeData, detectionResult, displayedImageUri, saving, routeId, saveRoute]);
-
-    if (!permission) {
-        // Camera permissions are still loading
-        return (
-            <SafeAreaView style={globalStyles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-                        <Text style={[globalStyles.textButton, globalStyles.textPrimary]}>← Back</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.content} />
-            </SafeAreaView>
-        );
-    }
-
-    if (!permission.granted) {
-        // Request permission automatically and show loading
-        requestPermission();
-        return (
-            <SafeAreaView style={globalStyles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-                        <Text style={[globalStyles.textButton, globalStyles.textPrimary]}>← Back</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.content} />
-            </SafeAreaView>
-        );
+        return <CameraPermissionScreen onGoBack={handleGoBack} />;
     }
 
     return (
@@ -290,7 +151,7 @@ export default function ScanRoute() {
                             onRetake={retakePicture}
                             onClose={() => setImageModalVisible(false)}
                             onPressIn={onPressInImage}
-                            onPressOut={onPressOutImage}
+                            onPressOut={handlePressOut}
                             holdPointScreen={holdPointScreen}
                             isHolding={isHolding}
                             onImageLayout={onImageLayout}
@@ -301,7 +162,7 @@ export default function ScanRoute() {
                             <View style={styles.scanButtonContainer}>
                                 <TouchableOpacity 
                                     style={[styles.scanButton]}
-                                    onPress={handleScanRoute}
+                                    onPress={scanRoute}
                                 >
                                     <Text style={styles.scanButtonText}>
                                         {holdPointPx ? 'Scan Route' : 'Tap to Select'}

@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: 16,
-    color: colors.textPrimary,
+    color: colors.black,
     lineHeight: 24,
   },
   factorItem: {
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
-    color: colors.textPrimary,
+    color: colors.black,
     fontWeight: '500',
   },
 });
