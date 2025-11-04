@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -8,7 +8,6 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,9 +16,8 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles, colors } from '../styles/globalStyles';
-import { AuthService } from '../services/authService';
-import { FirestoreService, FirestoreRouteDocument } from '../services/firestoreService';
-import { StorageService } from '../services/storageService';
+import { FirestoreRouteDocument } from '../services/firestoreService';
+import { usePastRoutes } from '../hooks/usePastRoutes';
 import { HomeStackParamList } from '../navigation/HomeStack';
 import { MainTabParamList } from '../navigation/MainTabs';
 
@@ -87,85 +85,20 @@ const RouteCard: React.FC<RouteCardProps> = ({ route, onPress, onDelete, isDelet
 
 export default function PastRoutes() {
   const navigation = useNavigation<PastRoutesNavigationProp>();
-  const [routes, setRoutes] = useState<FirestoreRouteDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deletingRouteId, setDeletingRouteId] = useState<string | null>(null);
+  const {
+    routes,
+    loading,
+    error,
+    deletingRouteId,
+    loadRoutes,
+    handleDeleteRoute,
+  } = usePastRoutes();
 
   useFocusEffect(
     React.useCallback(() => {
       loadRoutes();
-    }, [])
+    }, [loadRoutes])
   );
-
-  const loadRoutes = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const currentUser = AuthService.getCurrentUser();
-      
-      if (!currentUser) {
-        setError('You must be logged in to view your routes');
-        setLoading(false);
-        return;
-      }
-
-      const userRoutes = await FirestoreService.getUserRoutes(currentUser.uid);
-      setRoutes(userRoutes);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load routes';
-      setError(message);
-      console.error('Error loading routes:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteRoute = (routeId: string) => {
-    const route = routes.find((r) => r.id === routeId);
-    if (!route) return;
-
-    Alert.alert(
-      'Delete Route',
-      `Are you sure you want to delete this ${route.grade.v_grade} route? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => confirmDeleteRoute(routeId, route),
-        },
-      ]
-    );
-  };
-
-  const confirmDeleteRoute = async (routeId: string, route: FirestoreRouteDocument) => {
-    try {
-      setDeletingRouteId(routeId);
-
-      // Delete route image from Storage
-      if (route.imagePath || route.imageUrl) {
-        try {
-          await StorageService.deleteRouteImage(route.imagePath || route.imageUrl);
-        } catch (error) {
-          // Continue even if image deletion fails
-          console.warn('Failed to delete route image:', error);
-        }
-      }
-
-      // Delete route from Firestore
-      await FirestoreService.deleteRoute(routeId);
-
-      // Remove from local state
-      setRoutes((prevRoutes) => prevRoutes.filter((r) => r.id !== routeId));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete route';
-      Alert.alert('Error', message);
-      console.error('Error deleting route:', err);
-    } finally {
-      setDeletingRouteId(null);
-    }
-  };
 
   if (loading) {
     return (
