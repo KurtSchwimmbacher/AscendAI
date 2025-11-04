@@ -1,5 +1,6 @@
 <h4 align="center"> A cross-platform mobile climbing route assistant</h4>
 
+![Banner](assets/banner/Frontend_Banner.png)
 ---
 
 <h1 align="center">AscendAI</h1>
@@ -114,15 +115,19 @@ npx expo start
   - Precise coordinate mapping for resizeMode="contain"
   - Loading overlay while detection runs
   - Annotated image displayed on return
+    ![Mockup 1](assets/mockups/Mockup_1.png)
 - Grade Reading
   - Kicks off after annotation, shows grade, confidence, reasoning and key factors
+    ![Mockup 4](assets/mockups/Mockup_4.png)
 - Past Routes
   - Saves annotated image to Firebase Storage
   - Saves metadata (grade, detection summary, timestamps, notes, manual grade) to Firestore
   - Browse cards, view details, edit (name/notes/manual grade), and delete
+    ![Mockup 3](assets/mockups/Mockup_3.png)
 - Profile
   - Username and profile picture upload (Firebase Storage)
   - Edit name, username, DOB, phone; delete account (removes profile, routes, and storage)
+    ![Mockup 5](assets/mockups/Mockup_5.png)
 
 ### 🧭 Navigation
 
@@ -132,8 +137,6 @@ npx expo start
 ---
 
 ## Demonstration
-
-
 
 ---
 
@@ -165,9 +168,8 @@ Key modules:
 ---
 
 ## User Testing
+
 ### 👥 User Testing (Ongoing)
-
-
 
 ---
 
@@ -182,6 +184,7 @@ Key modules:
 
 ### Challenges
 
+- Fine tuning colour detection
 - 422 errors from mismatched `Content-Type` and body/query formats
 - Client-side timeouts vs server processing time
 - EXIF/rotation issues – solved via minimal image manipulation
@@ -222,4 +225,3 @@ Built with ❤️ by:
 - Firebase for rapid auth, storage, and database capabilities
 - Open-source CV tooling and YOLO ecosystems for hold-detection foundations
 - **Open Window Lecturer Armand Pretorius** for providing feedback and insight
-
