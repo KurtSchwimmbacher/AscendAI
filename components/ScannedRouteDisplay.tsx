@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Modal, Pressable, ScrollView, ActivityIndicator } from 'react-native';
-import { colors } from '../styles/globalStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, globalStyles } from '../styles/globalStyles';
 import type { RouteGradeResponse } from '../hooks/readHook';
 
 interface ScannedRouteDisplayProps {
@@ -94,7 +95,7 @@ export default function ScannedRouteDisplay({
         {/* Bottom Controls - Retake, View Grade, and Close */}
         <View style={styles.bottomControls}>
           <Pressable style={styles.retakeButton} onPress={onRetake}>
-            <Text style={styles.retakeButtonText}>Retake</Text>
+            <Ionicons name="camera-outline" size={24} color={colors.white} />
           </Pressable>
           {isAnnotated && (gradeData || gradeError) && (
             <Pressable style={styles.viewGradeButton} onPress={() => setSheetVisible(true)}>
@@ -222,18 +223,15 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   retakeButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-  },
-  retakeButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: colors.red,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   viewGradeButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.red,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
@@ -247,7 +245,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.red,
     justifyContent: 'center',
     alignItems: 'center',
   },

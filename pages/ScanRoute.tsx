@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
         zIndex: 100,
     },
     scanButton: {
-        backgroundColor: colors.black,
+        backgroundColor: colors.red,
         paddingHorizontal: 40,
         paddingVertical: 16,
         borderRadius: 30,
