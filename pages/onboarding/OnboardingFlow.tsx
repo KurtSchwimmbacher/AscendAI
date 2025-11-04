@@ -8,6 +8,7 @@ import DateOfBirthScreen from './DateOfBirthScreen';
 import PhoneNumberScreen from './PhoneNumberScreen';
 import UsernameScreen from './UsernameScreen';
 import ProfilePictureScreen from './ProfilePictureScreen';
+import ScanDemoScreen from './ScanDemoScreen';
 
 export interface OnboardingData {
   fullName: string;
@@ -15,6 +16,7 @@ export interface OnboardingData {
   phoneNumber: string;
   username: string;
   profilePictureUrl: string;
+  scanDemoCompleted?: string;
 }
 
 interface OnboardingFlowProps {
@@ -32,9 +34,10 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
     { component: PhoneNumberScreen, key: 'phoneNumber' },
     { component: UsernameScreen, key: 'username' },
     { component: ProfilePictureScreen, key: 'profilePictureUrl' },
+    { component: ScanDemoScreen, key: 'scanDemoCompleted' },
   ];
 
-  const handleNext = (field: keyof OnboardingData, value: string) => {
+  const handleNext = (field: keyof OnboardingData | 'scanDemoCompleted', value: string) => {
     const newData = { ...onboardingData, [field]: value };
     setOnboardingData(newData);
 
@@ -42,7 +45,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
       setCurrentStep(currentStep + 1);
     } else {
       // All steps completed
-      onComplete(newData as OnboardingData);
+      // Remove scanDemoCompleted from final data as it's just a flag
+      const { scanDemoCompleted, ...finalData } = newData;
+      onComplete(finalData as OnboardingData);
     }
   };
 
