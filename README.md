@@ -1,7 +1,6 @@
 <h4 align="center"> A cross-platform mobile climbing route assistant</h4>
 
-![Banner](assets/banner/Frontend_Banner.png)
----
+## ![Banner](assets/banner/Frontend_Banner.png)
 
 <h1 align="center">AscendAI</h1>
 <h4 align="center">Frontend Repo • <a href="https://github.com/KurtSchwimmbacher/AscendBackend.git">Backend Repo</a></h4>
@@ -169,7 +168,19 @@ Key modules:
 
 ## User Testing
 
-### 👥 User Testing (Ongoing)
+### 👥 User Testing
+
+Method: Moderated observational exploratory usability test (unstructured tasks). Participants freely explored the app while I observed in-session, followed by a post-test Google Form survey.
+
+#### Key Insights
+
+![User Testing](assets/userTesting/UserTesting.png)
+
+One of the biggest frustrations surrounding rock climbing is needing to ask others for help identifying holds. Every user felt the app was successful in solving this pain. 
+
+The least clear screen to use was the Scan a Route screen, the rest of the app was intuitive and structured. Users felt the app was either totally or somewhat successful in clarifying what holds were legal in a route. 
+
+Key insights: Either an onboarding mode to clarify/demonstrate the scan screen is required or the UI must be updated to better reflect the desired behavior. 
 
 ---
 
