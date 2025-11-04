@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Import screens
 import AuthFlow from '../pages/auth/AuthFlow';
 import OnboardingFlow from '../pages/onboarding/OnboardingFlow';
 import MainTabs from './MainTabs';
+import LoadingScreen from '../components/LoadingScreen';
 
 // Import services
 import { AuthService } from '../services/authService';
@@ -88,11 +88,7 @@ export default function AppNavigator() {
 
   // Show loading screen while checking authentication or onboarding status
   if (isLoading || isCheckingOnboarding) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   const handleOnboardingComplete = async (onboardingData: any) => {
@@ -174,12 +170,3 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-  },
-});
