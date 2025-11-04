@@ -137,6 +137,10 @@ npx expo start
 
 ## Demonstration
 
+📹 **[Watch Demo Video](https://drive.google.com/file/d/12Mv9FZuAK4SjZkUlvpzggjBInWlw0bGV/view?usp=sharing)**
+
+_A walkthrough of the app's core features including route scanning, grade detection, and route management._
+
 ---
 
 ## Architecture / System Design
@@ -176,11 +180,11 @@ Method: Moderated observational exploratory usability test (unstructured tasks).
 
 ![User Testing](assets/userTesting/UserTesting.png)
 
-One of the biggest frustrations surrounding rock climbing is needing to ask others for help identifying holds. Every user felt the app was successful in solving this pain. 
+One of the biggest frustrations surrounding rock climbing is needing to ask others for help identifying holds. Every user felt the app was successful in solving this pain.
 
-The least clear screen to use was the Scan a Route screen, the rest of the app was intuitive and structured. Users felt the app was either totally or somewhat successful in clarifying what holds were legal in a route. 
+The least clear screen to use was the Scan a Route screen, the rest of the app was intuitive and structured. Users felt the app was either totally or somewhat successful in clarifying what holds were legal in a route.
 
-Key insights: Either an onboarding mode to clarify/demonstrate the scan screen is required or the UI must be updated to better reflect the desired behavior. 
+Key insights: Either an onboarding mode to clarify/demonstrate the scan screen is required or the UI must be updated to better reflect the desired behavior.
 
 ---
 
