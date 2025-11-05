@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { AuthService } from '../services/authService';
 import { FirestoreService } from '../services/firestoreService';
 import { StorageService } from '../services/storageService';
+import { formatErrorMessage } from '../utils/errorMessages';
 
 interface UseAccountDeletionReturn {
   deleting: boolean;
@@ -35,7 +36,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
       await AuthService.deleteUser();
     } catch (err) {
       setDeleting(false);
-      const message = err instanceof Error ? err.message : 'Failed to delete account';
+      const message = formatErrorMessage(err, 'Deleting account');
       Alert.alert('Error', message);
       console.error('Error deleting account:', err);
     }
