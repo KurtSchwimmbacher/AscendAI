@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect} from 'react';
 import { Image } from 'react-native';
 
 interface ImageSize {
@@ -38,15 +38,30 @@ export function useImageCoordinateMapping(): UseImageCoordinateMappingReturn {
   const [containerSize, setContainerSize] = useState<ContainerSize>({ width: 0, height: 0 });
   const [imageSize, setImageSize] = useState<ImageSize | null>(null);
 
+  // Reset container size when image size changes (new image loaded)
+  useEffect(() => {
+    if (!imageSize) {
+      setContainerSize({ width: 0, height: 0 });
+    }
+  }, [imageSize]);
+
   const onImageLayout = useCallback((e: any) => {
-    setContainerSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
+    const { width, height } = e.nativeEvent.layout;
+    console.log('Image layout measured:', { width, height });
+    setContainerSize({ width, height });
   }, []);
 
   const mapTapToImagePixels = useCallback((tapX: number, tapY: number): Point | null => {
-    if (!imageSize) return null;
+    if (!imageSize) {
+      console.log('mapTapToImagePixels: No imageSize');
+      return null;
+    }
     const { width: cw, height: ch } = containerSize;
     const { width: iw, height: ih } = imageSize;
-    if (cw <= 0 || ch <= 0 || iw <= 0 || ih <= 0) return null;
+    if (cw <= 0 || ch <= 0 || iw <= 0 || ih <= 0) {
+      console.log('mapTapToImagePixels: Invalid dimensions', { cw, ch, iw, ih });
+      return null;
+    }
 
     const scale = Math.min(cw / iw, ch / ih);
     const renderedW = iw * scale;

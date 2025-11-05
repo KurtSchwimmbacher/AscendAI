@@ -50,10 +50,28 @@ export function useRouteScanning({
     isHolding: false,
   });
 
-  // Reset state when new image is captured
+  // Reset state when new image is captured or cleared
   useEffect(() => {
-    if (!capturedImage) return;
+    if (!capturedImage) {
+      // Reset state when image is cleared (retake)
+      // This ensures clean state for the next scan
+      setState({
+        displayedImageUri: null,
+        isAnnotatedImage: false,
+        detectionResult: null,
+        holdPointPx: null,
+        holdPointScreen: null,
+        isHolding: false,
+      });
+      resetDetection();
+      resetRead();
+      resetSaveRoute();
+      return;
+    }
     
+    // Reset state when new image is captured
+    // This happens immediately when a new picture is taken
+    console.log('useRouteScanning: New image captured, resetting state', { capturedImage });
     setState({
       displayedImageUri: capturedImage,
       isAnnotatedImage: false,
@@ -69,15 +87,23 @@ export function useRouteScanning({
   }, [capturedImage, resetDetection, resetRead, resetSaveRoute, onImageSizeLoaded]);
 
   const handlePressIn = useCallback((tapX: number, tapY: number, mappedPx: { x: number; y: number } | null) => {
-    if (!mappedPx) return;
+    if (!mappedPx) {
+      console.log('handlePressIn: No mappedPx provided');
+      return;
+    }
     
     const screen = mapImagePixelsToScreen(mappedPx.x, mappedPx.y);
-    setState(prev => ({
-      ...prev,
-      isHolding: true,
-      holdPointPx: mappedPx,
-      holdPointScreen: screen ? { x: screen.sx, y: screen.sy } : prev.holdPointScreen,
-    }));
+    console.log('handlePressIn: Setting hold point', { mappedPx, screen });
+    setState(prev => {
+      const newState = {
+        ...prev,
+        isHolding: true,
+        holdPointPx: mappedPx,
+        holdPointScreen: screen ? { x: screen.sx, y: screen.sy } : prev.holdPointScreen,
+      };
+      console.log('handlePressIn: State updated', { holdPointScreen: newState.holdPointScreen });
+      return newState;
+    });
   }, [mapImagePixelsToScreen]);
 
   const handlePressOut = useCallback(() => {

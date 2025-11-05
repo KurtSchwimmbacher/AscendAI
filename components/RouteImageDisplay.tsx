@@ -27,7 +27,7 @@ export default function RouteImageDisplay({
         onPressOut={onPressOut}
       >
         <Image 
-          key={imageUri}
+          key={`image-${imageUri}`}
           onLayout={onImageLayout}
           source={{ uri: imageUri }} 
           style={styles.fullScreenImage}

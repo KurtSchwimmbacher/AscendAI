@@ -47,22 +47,28 @@ export default function ScannedRouteDisplay({
     }
   }, [isAnnotated]);
 
-  if (!imageUri) return null;
-
+  // Force remount when imageUri changes by using it as part of key
+  // This ensures all handlers and state reset properly
   return (
     <>
-      <View style={styles.container}>
-        <RouteImageDisplay
-          imageUri={imageUri}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-          holdPointScreen={holdPointScreen}
-          isHolding={isHolding}
-          onImageLayout={onImageLayout}
-        />
+      <View style={styles.container} key={`route-display-${imageUri || 'empty'}`}>
+        {imageUri ? (
+          <RouteImageDisplay
+            imageUri={imageUri}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            holdPointScreen={holdPointScreen}
+            isHolding={isHolding}
+            onImageLayout={onImageLayout}
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ color: colors.white }}>Loading image...</Text>
+          </View>
+        )}
 
         {/* Grade indicator - only show when image is annotated */}
-        {isAnnotated && gradeData && !gradeLoading && (
+        {imageUri && isAnnotated && gradeData && !gradeLoading && (
           <Pressable 
             style={styles.gradeIndicator}
             onPress={() => setSheetVisible(true)}
@@ -72,25 +78,37 @@ export default function ScannedRouteDisplay({
             </Text>
           </Pressable>
         )}
-        {isAnnotated && gradeLoading && (
+        {imageUri && isAnnotated && gradeLoading && (
           <View style={styles.gradeIndicator}>
             <ActivityIndicator size="small" color={colors.white} />
             <Text style={styles.gradeIndicatorText}>Reading route…</Text>
           </View>
         )}
 
-        {/* Bottom Controls - Retake, View Grade, and Close */}
+        {/* Bottom Controls - Always render buttons so they work even during loading */}
         <View style={styles.bottomControls}>
-          <Pressable style={styles.retakeButton} onPress={onRetake}>
+          <Pressable 
+            style={styles.retakeButton} 
+            onPress={() => {
+              console.log('Retake button pressed');
+              onRetake?.();
+            }}
+          >
             <Ionicons name="camera-outline" size={24} color={colors.white} />
           </Pressable>
-          {isAnnotated && (gradeData || gradeError) && (
+          {imageUri && isAnnotated && (gradeData || gradeError) && (
             <Pressable style={styles.viewGradeButton} onPress={() => setSheetVisible(true)}>
               <Text style={styles.viewGradeButtonText}>View Grade</Text>
             </Pressable>
           )}
           {onClose && (
-            <Pressable style={styles.closeButton} onPress={onClose}>
+            <Pressable 
+              style={styles.closeButton} 
+              onPress={() => {
+                console.log('Close button pressed');
+                onClose();
+              }}
+            >
               <Text style={styles.closeButtonText}>✕</Text>
             </Pressable>
           )}

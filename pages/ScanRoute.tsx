@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -41,9 +42,13 @@ export default function ScanRoute() {
         mapImagePixelsToScreen,
     } = useImageCoordinateMapping();
 
-    // Load image size when captured
+    // Load image size when captured, reset when cleared
     useEffect(() => {
-        if (!capturedImage) return;
+        if (!capturedImage) {
+            // Reset image size when image is cleared (retake)
+            setImageSize(null);
+            return;
+        }
         loadImageSize(capturedImage)
             .then(setImageSize)
             .catch(() => setImageSize(null));
@@ -78,11 +83,36 @@ export default function ScanRoute() {
     };
 
     const onPressInImage = (e: any) => {
-        if (!imageSize) return;
+        // Safety guards: ensure we have valid image size and captured image
+        if (!imageSize || !capturedImage) {
+            console.log('Tap blocked - missing imageSize or capturedImage', { 
+                hasImageSize: !!imageSize, 
+                hasCapturedImage: !!capturedImage,
+                displayedImageUri,
+                isAnnotatedImage 
+            });
+            return;
+        }
+        
+        // Only allow taps on the raw captured image (before annotation)
+        // Once annotated, displayedImageUri changes to the annotated image URL
+        if (isAnnotatedImage || (displayedImageUri && displayedImageUri !== capturedImage)) {
+            console.log('Tap blocked - viewing annotated image or mismatch', { 
+                isAnnotatedImage, 
+                displayedImageUri, 
+                capturedImage 
+            });
+            return;
+        }
+        
         const { locationX, locationY } = e.nativeEvent;
+        console.log('Raw tap received:', { locationX, locationY, imageSize, capturedImage, displayedImageUri });
         const mapped = mapTapToImagePixels(locationX, locationY);
         if (mapped) {
+            console.log('Processing tap:', { locationX, locationY, mapped });
             handlePressIn(locationX, locationY, mapped);
+        } else {
+            console.log('Tap mapping failed - coordinates out of bounds or invalid');
         }
     };
 
@@ -143,7 +173,7 @@ export default function ScanRoute() {
                         )}
 
                         <ScannedRouteDisplay
-                            imageUri={displayedImageUri}
+                            imageUri={displayedImageUri || null}
                             gradeData={gradeData}
                             gradeLoading={reading}
                             gradeError={readError}
