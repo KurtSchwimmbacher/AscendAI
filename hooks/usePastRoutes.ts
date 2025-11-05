@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { AuthService } from '../services/authService';
 import { FirestoreService, FirestoreRouteDocument } from '../services/firestoreService';
 import { StorageService } from '../services/storageService';
+import { formatErrorMessage } from '../utils/errorMessages';
 
 interface UsePastRoutesReturn {
   routes: FirestoreRouteDocument[];
@@ -37,7 +38,7 @@ export function usePastRoutes(): UsePastRoutesReturn {
       const userRoutes = await FirestoreService.getUserRoutes(currentUser.uid);
       setRoutes(userRoutes);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load routes';
+      const message = formatErrorMessage(err, 'Loading routes');
       setError(message);
       console.error('Error loading routes:', err);
     } finally {
@@ -65,7 +66,7 @@ export function usePastRoutes(): UsePastRoutesReturn {
       // Remove from local state
       setRoutes((prevRoutes) => prevRoutes.filter((r) => r.id !== routeId));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete route';
+      const message = formatErrorMessage(err, 'Deleting route');
       Alert.alert('Error', message);
       console.error('Error deleting route:', err);
     } finally {

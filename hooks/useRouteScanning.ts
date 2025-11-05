@@ -4,6 +4,7 @@ import { useReadRouteGrade } from './readHook';
 import { useSaveRoute } from './useSaveRoute';
 import { AuthService } from '../services/authService';
 import Constants from 'expo-constants';
+import { formatErrorMessage } from '../utils/errorMessages';
 
 interface RouteScanningState {
   displayedImageUri: string | null;
@@ -125,15 +126,16 @@ export function useRouteScanning({
         }));
 
         // Kick off grade reading after annotated image is set
-        try {
-          await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
-        } catch (e) {
-          // Error handled by hook
-        }
+             try {
+                 await readGrade({ uri: absolute, name: 'annotated.jpg', type: 'image/jpeg' });
+             } catch (e) {
+                 // Convert to friendly error for any consumer displaying readError
+                 console.warn(formatErrorMessage(e, 'Reading route grade'));
+             }
       }
-    } catch (e) {
-      // Error handled by hook
-    }
+        } catch (e) {
+            console.warn(formatErrorMessage(e, 'Detecting route'));
+        }
   }, [capturedImage, state.holdPointPx, runDetection, readGrade, mapImagePixelsToScreen]);
 
   // Auto-save route when grade reading completes

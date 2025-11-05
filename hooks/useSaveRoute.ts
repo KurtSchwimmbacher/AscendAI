@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { RouteService } from '../services/routeService';
+import { formatErrorMessage } from '../utils/errorMessages';
 import { SaveRouteParams } from '../types/routeData';
 import { FirestoreRouteDocument } from '../types/routeData';
 
@@ -50,7 +51,7 @@ export function useSaveRoute() {
       setState({ loading: false, error: null, routeId });
       return routeId;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      const message = formatErrorMessage(err, 'Saving route');
       setState({ loading: false, error: message, routeId: null });
       throw err;
     }

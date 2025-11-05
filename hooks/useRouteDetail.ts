@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { FirestoreService, FirestoreRouteDocument } from '../services/firestoreService';
+import { formatErrorMessage } from '../utils/errorMessages';
 
 interface RouteEditData {
   routeName: string;
@@ -121,7 +122,7 @@ export function useRouteDetail({ initialRoute }: UseRouteDetailProps): UseRouteD
       setIsEditing(false);
       Alert.alert('Success', 'Route updated successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update route';
+      const message = formatErrorMessage(error, 'Updating route');
       Alert.alert('Error', message);
       console.error('Error updating route:', error);
     } finally {
