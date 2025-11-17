@@ -19,6 +19,8 @@
 
   <h3 align="center">AscendAI</h3>
 
+<h4 align="center">Frontend Repo • <a href="https://github.com/KurtSchwimmbacher/AscendBackend.git">Backend Repo</a></h4>
+
 A cross-platform mobile climbing route assistant that helps boulderers detect routes by colour, annotate holds, and estimate route grades using computer vision and AI.
 <br>
 <a href="https://drive.google.com/file/d/12Mv9FZuAK4SjZkUlvpzggjBInWlw0bGV/view?usp=sharing">View Demo</a>
@@ -329,6 +331,8 @@ Key feedback:
 
 - **Improvement Areas**: Key insight identified that either an onboarding mode to clarify/demonstrate the scan screen is required, or the UI must be updated to better reflect the desired behavior.
 
+![UserTesting][image6]
+
 #### Unit Tests
 
 `Unit Tests` are currently not implemented. Future plans include Jest + React Native Testing Library for:
@@ -451,6 +455,7 @@ Distributed under the MIT License. See License for details
 [image3]: ./assets/mockups/Mockup_4.png
 [image4]: ./assets/mockups/Mockup_3.png
 [image5]: ./assets/mockups/Mockup_5.png
+[image6]: ./assets/userTesting/UserTesting.png
 
 <!-- Refer to https://shields.io/ for more information and options about the shield links at the top of the ReadMe file -->
 
