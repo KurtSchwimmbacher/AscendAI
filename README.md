@@ -255,6 +255,8 @@ Key ideation points:
 
 Wireframes were created to map out the user flow and interface design. The focus was on simplicity and ease of use, ensuring that users could quickly scan routes, view results, and manage their route library with minimal effort.
 
+
+
 ### User-flow
 
 The user flow was designed to be straightforward:
