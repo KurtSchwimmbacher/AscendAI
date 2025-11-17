@@ -255,7 +255,11 @@ Key ideation points:
 
 Wireframes were created to map out the user flow and interface design. The focus was on simplicity and ease of use, ensuring that users could quickly scan routes, view results, and manage their route library with minimal effort.
 
+![AscendWireframes1][image7]
 
+<br>
+
+![AscendWireframes2][image8]
 
 ### User-flow
 
@@ -458,6 +462,8 @@ Distributed under the MIT License. See License for details
 [image4]: ./assets/mockups/Mockup_3.png
 [image5]: ./assets/mockups/Mockup_5.png
 [image6]: ./assets/userTesting/UserTesting.png
+[image7]: ./assets/AscendWireframes1.png
+[image8]: ./assets/AscendWireframes2.png
 
 <!-- Refer to https://shields.io/ for more information and options about the shield links at the top of the ReadMe file -->
 
