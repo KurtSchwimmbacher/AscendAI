@@ -16,7 +16,11 @@
       "backgroundColor": "#DEDEDE"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to your camera to scan climbing routes and identify holds.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select and save route images."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +29,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.squeezey.AscendAI"
+      "package": "com.squeezey.AscendAI",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

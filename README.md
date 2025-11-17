@@ -1,242 +1,458 @@
-<h4 align="center"> A cross-platform mobile climbing route assistant</h4>
+<br />
 
-## ![Banner](assets/banner/Frontend_Banner.png)
+![GitHub repo size](https://img.shields.io/github/repo-size/KurtSchwimmbacher/AscendAI?color=%23000000) ![GitHub watchers](https://img.shields.io/github/watchers/KurtSchwimmbacher/AscendAI?color=%23000000) ![GitHub language count](https://img.shields.io/github/languages/count/KurtSchwimmbacher/AscendAI?color=%23000000) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/KurtSchwimmbacher/AscendAI?color=%23000000) [![Instagram][instagram-shield]][instagram-url]
 
-<h1 align="center">AscendAI</h1>
-<h4 align="center">Frontend Repo • <a href="https://github.com/KurtSchwimmbacher/AscendBackend.git">Backend Repo</a></h4>
+<!-- HEADER SECTION -->
+
+<h3 align="center" style="padding:0;margin:0;">Kurt Schwimmbacher</h3>
+
+<h3 align="center" style="padding:0;margin:0;">231002</h3>
+
+<h4 align="center">DV300 2025</h4>
+
+</br>
+
+<p align="center">
+  <a href="https://github.com/KurtSchwimmbacher/AscendAI">
+    
+  </a>
+
+  <h3 align="center">AscendAI</h3>
+
+A cross-platform mobile climbing route assistant that helps boulderers detect routes by colour, annotate holds, and estimate route grades using computer vision and AI.
+<br>
+<a href="https://drive.google.com/file/d/12Mv9FZuAK4SjZkUlvpzggjBInWlw0bGV/view?usp=sharing">View Demo</a>
+·
+<a href="https://github.com/KurtSchwimmbacher/AscendAI/issues">Report Bug</a>
+·
+<a href="https://github.com/KurtSchwimmbacher/AscendAI/issues">Request Feature</a>
+
+</p>
+
+<!-- TABLE OF CONTENTS -->
 
 <details>
-<summary>📑 <strong>Table of Contents</strong> (Click to expand)</summary>
+<summary><h2>Table of Contents</h2></summary>
 
-1. <a href="#about-the-project"><strong>About The Project</strong></a>  
-   ↳ 1.1 <a href="#11-project-description">Project Description</a>  
-   ↳ 1.2 <a href="#12-built-with">Built With</a>
-2. <a href="#getting-started"><strong>Getting Started</strong></a>  
-   ↳ 2.1 <a href="#21-prerequisites">Prerequisites</a>  
-   ↳ 2.2 <a href="#22-how-to-install">How to Install</a>
-3. <a href="#features--usage"><strong>Features & Usage</strong></a>
-4. <a href="#demonstration"><strong>Demonstration</strong></a>
-5. <a href="#architecture--system-design"><strong>Architecture / System Design</strong></a>
-6. <a href="#unit-testing--user-testing"><strong>Unit Testing & User Testing</strong></a>
-7. <a href="#highlights--challenges"><strong>Highlights & Challenges</strong></a>
-8. <a href="#roadmap--future-implementations"><strong>Roadmap & Future Implementations</strong></a>
-9. <a href="#contributing--licenses"><strong>Contributing & Licenses</strong></a>
-10. <a href="#authors--contact-info"><strong>Authors & Contact Info</strong></a>
-11. <a href="#acknowledgements"><strong>Acknowledgements</strong></a>
+- [About the Project](#about-the-project)
+
+  - [Project Description](#project-description)
+
+  - [Built With](#built-with)
+
+- [Getting Started](#getting-started)
+
+  - [Prerequisites](#prerequisites)
+
+  - [How to install](#how-to-install)
+
+- [Features and Functionality](#features-and-functionality)
+
+- [Concept Process](#concept-process)
+
+  - [Ideation](#ideation)
+
+  - [Wireframes](#wireframes)
+
+  - [User-flow](#user-flow)
+
+- [Development Process](#development-process)
+
+  - [Implementation Process](#implementation-process)
+
+    - [Highlights](#highlights)
+
+    - [Challenges](#challenges)
+
+  - [Reviews and Testing](#reviews-and-testing)
+
+    - [Feedback from Reviews](#feedback-from-reviews)
+
+    - [Unit Tests](#unit-tests)
+
+  - [Future Implementation](#future-implementation)
+
+- [Final Outcome](#final-outcome)
+
+  - [Mockups](#mockups)
+
+  - [Video Demonstration](#video-demonstration)
+
+- [Conclusion](#conclusion)
+
+- [Roadmap](#roadmap)
+
+- [Contributing](#contributing)
+
+- [License](#license)
+
+- [Contact](#contact)
+
+- [Acknowledgements](#acknowledgements)
+
 </details>
 
----
+<!--PROJECT DESCRIPTION-->
 
-## About The Project
+## About the Project
 
-A Modern, Cross-Platform Climbing Route Assistant
+<!-- header image of project -->
 
-### 1.1 Project Description
+![ReadmeBanner][image1]
 
-AscendAI is a mobile app that helps boulderers detect routes by colour, annotate holds, and estimate route grades using computer vision and AI. Built with Expo/React Native for iOS/Android, it integrates a FastAPI backend for hold detection and analysis, and Firebase for auth, storage and persistency. Users can scan, review, save, and manage past routes with notes and manual grade overrides.
+### Project Description
 
-Key capabilities:
+AscendAI is a React Native mobile app designed to help boulderers identify climbing routes by detecting holds through computer vision and AI. The app allows users to scan routes by color from a single photo, automatically annotate holds with bounding boxes, and estimate route grades with confidence scores and reasoning.
 
-- Route detection by colour from a single photo with precise tap-to-image mapping
-- Annotated image generation (bounding boxes, optional tap marker)
-- Automatic route grade estimation with reasoning and confidence
-- Persistent “Past Routes” with image storage in Firebase Storage and metadata in Firestore
-- Profile management with username and profile picture
-- Simple, responsive UI with bottom tab navigation
+The app provides a modern solution to a common climbing problem: identifying which holds belong to a specific route. By using precise tap-to-image coordinate mapping, users can select a hold color, and the app will detect all matching holds, generate annotated images, and provide AI-powered grade estimations. All scanned routes can be saved to a personal library with notes and manual grade overrides.
 
-### 1.2 Built With
+Key capabilities include route detection by color with precise coordinate mapping, annotated image generation with bounding boxes, automatic route grade estimation with reasoning and confidence, persistent route storage with Firebase, and comprehensive profile management.
 
-**Frontend**  
-React Native (Expo) • TypeScript • React Navigation • Axios
+### Built With
 
-**Backend**  
-FastAPI • Python • Pillow • (YOLO hold detection service) • Render
+**Frontend**
 
-**Cloud**  
-Firebase Auth • Firestore • Firebase Storage
+- [React Native](https://reactnative.dev/)
+- [Expo](https://expo.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [React Navigation](https://reactnavigation.org/)
+- [Axios](https://axios-http.com/)
 
-**Tooling**  
-Expo Image Picker • Expo Image Manipulator
+**Backend**
 
----
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Python](https://www.python.org/)
+- [Pillow](https://pillow.readthedocs.io/)
+- [YOLO](https://github.com/ultralytics/ultralytics) (Hold detection service)
+- [Render](https://render.com/)
+
+**Cloud Services**
+
+- [Firebase Authentication](https://firebase.google.com/docs/auth)
+- [Firestore](https://firebase.google.com/docs/firestore)
+- [Firebase Storage](https://firebase.google.com/docs/storage)
+
+**Tooling**
+
+- [Expo Image Picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/)
+- [Expo Image Manipulator](https://docs.expo.dev/versions/latest/sdk/imagemanipulator/)
+
+<!-- GETTING STARTED -->
 
 ## Getting Started
 
-### 2.1 Prerequisites
+The following instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-- Node.js 18+
-- Expo CLI
-- iOS Simulator/Xcode (macOS) or Android Studio/Emulator
-- Firebase project (Auth, Firestore, Storage)
-- Backend API (FastAPI) deployed (e.g., Render)
+### Prerequisites
 
-Optional:
+Ensure that you have the latest version of the following installed on your machine:
 
-- nvm for Node version management
+- **Node.js** (v18 or higher) - [Download Node.js](https://nodejs.org/)
+- **Expo CLI** - Install via `npm install -g expo-cli`
+- **iOS Simulator/Xcode** (macOS) or **Android Studio/Emulator** (Windows/macOS/Linux)
+- **Firebase project** with Authentication, Firestore, and Storage enabled
+- **Backend API** (FastAPI) deployed (e.g., on Render)
 
-### 2.2 How to Install
+> **Note:** You will need to configure your Firebase project with Auth, Firestore, and Storage enabled. Additionally, ensure your backend API is deployed and accessible. The backend repository can be found at [AscendBackend](https://github.com/KurtSchwimmbacher/AscendBackend.git).
 
-1. Clone the repository
+### How to install
 
-```bash
-git clone <your-frontend-repo-url>
+#### Installation
+
+Here are a couple of ways to clone this repo:
+
+1. **Clone Repository** </br>
+
+Run the following in the command-line to clone the project:
+
+```sh
+git clone https://github.com/KurtSchwimmbacher/AscendAI.git
 cd AscendAI
 ```
 
-2. Install dependencies
+2. **Install Dependencies** </br>
 
-```bash
+Run the following in the command-line to install all the required dependencies:
+
+```sh
 npm install
 npx expo install expo-image-picker expo-image-manipulator
 ```
 
-3. Configure environment
+3. **Configure Environment** </br>
+
+Set up your Firebase project and configure your environment variables:
 
 - Set API URL in app config (Expo Constants extra) or `.env`:
-  - `API_URL=https://ascendbackend-b2f7.onrender.com`
+  ```js
+  API_URL=https://ascendbackend-b2f7.onrender.com
+  ```
 - Ensure `services/firebase.ts` is configured with your Firebase keys (Auth/Firestore/Storage).
 
-4. Run the app
+4. **Run the App** </br>
 
-```bash
+Start the Expo development server:
+
+```sh
 npx expo start
-# press 'i' for iOS simulator or 'a' for Android emulator,
-# or scan the QR with Expo Go on a device
 ```
 
----
+Press 'i' for iOS simulator or 'a' for Android emulator, or scan the QR code with Expo Go on a physical device.
 
-## Features & Usage
+<!-- FEATURES AND FUNCTIONALITY-->
 
-### 🚀 Core Features
+## Features and Functionality
 
-- Scan Route (Camera → Photo → Press-and-hold to select colour → Scan)
-  - Precise coordinate mapping for resizeMode="contain"
-  - Loading overlay while detection runs
-  - Annotated image displayed on return
-    ![Mockup 1](assets/mockups/Mockup_1.png)
-- Grade Reading
-  - Kicks off after annotation, shows grade, confidence, reasoning and key factors
-    ![Mockup 4](assets/mockups/Mockup_4.png)
-- Past Routes
-  - Saves annotated image to Firebase Storage
-  - Saves metadata (grade, detection summary, timestamps, notes, manual grade) to Firestore
-  - Browse cards, view details, edit (name/notes/manual grade), and delete
-    ![Mockup 3](assets/mockups/Mockup_3.png)
-- Profile
-  - Username and profile picture upload (Firebase Storage)
-  - Edit name, username, DOB, phone; delete account (removes profile, routes, and storage)
-    ![Mockup 5](assets/mockups/Mockup_5.png)
+![ScanRouteMockup][image2]
 
-### 🧭 Navigation
+### Route Detection by Color
 
-- Bottom tabs (Home, Scan, Profile)
-- Auth/onboarding flow before tabs are shown
+Scan climbing routes by selecting a hold color from a photo. The app uses precise tap-to-image coordinate mapping to identify the selected color, then detects all matching holds using computer vision. The detection process includes precise coordinate mapping for letterboxed images, ensuring accurate color selection regardless of image aspect ratio.
 
----
+![GradeReadingMockup][image3]
 
-## Demonstration
+### AI-Powered Grade Estimation
 
-📹 **[Watch Demo Video](https://drive.google.com/file/d/12Mv9FZuAK4SjZkUlvpzggjBInWlw0bGV/view?usp=sharing)**
+After route detection, the app automatically analyzes the route and provides grade estimations with confidence scores, reasoning, and key factors. The grade analysis considers hold types, route complexity, and climbing difficulty to provide accurate V-grade estimates with detailed explanations.
 
-_A walkthrough of the app's core features including route scanning, grade detection, and route management._
+![PastRoutesMockup][image4]
 
----
+### Past Routes Library
 
-## Architecture / System Design
+Save and manage all your scanned routes in a personal library. Each route includes the annotated image stored in Firebase Storage, along with metadata (grade, detection summary, timestamps, notes, and manual grade overrides) saved in Firestore. Browse your routes, view detailed information, edit notes and grades, and delete routes as needed.
 
-High-level:
+![ProfileMockup][image5]
 
-- React Native app (Expo) communicates with FastAPI
-- Image capture → optional front-end normalization (expo-image-manipulator)
-- Detection endpoint returns selected colour, detections, and optional annotated image URL
-- After successful detection, annotated image is uploaded to Firebase Storage; route metadata is saved to Firestore
-- Grade analysis endpoint returns v-grade, confidence, reasoning, key factors, and model metadata
-- Past routes UI reads from Firestore; detail screen allows editing and manual grade override
-- Profile uses Firebase Auth; profile picture stored in Firebase Storage
+### Profile Management
 
-Key modules:
+Comprehensive user profile management with username and profile picture upload to Firebase Storage. Edit personal information including name, username, date of birth, and phone number. Delete account functionality removes all associated data including profile, routes, and storage files.
 
-- `services/routeDetectionService.ts` – detect-by-colour API
-- `hooks/detectRouteHook.ts` – detection hook
-- `services/gradeService.ts` & `hooks/readHook.ts` – grade analysis
-- `services/storageService.ts` – upload/delete images (routes, profiles)
-- `services/firestoreService.ts` – user profiles, routes CRUD
-- `pages/ScanRoute.tsx` – scan flow
-- `components/ScannedRouteDisplay.tsx` – annotated image & grade sheet
-- `pages/PastRoutes.tsx` & `pages/RouteDetailScreen.tsx` – management & edits
-- `pages/ProfileScreen.tsx` – user info, edit, delete
-- `navigation/MainTabs.tsx` & `navigation/HomeStack.tsx` – navigation
+### Navigation
 
----
+Simple, intuitive bottom tab navigation with Home, Scan, and Profile screens. Authentication and onboarding flow ensures users are properly set up before accessing the main app features.
 
-## User Testing
+<!-- CONCEPT PROCESS -->
 
-### 👥 User Testing
+## Concept Process
 
-Method: Moderated observational exploratory usability test (unstructured tasks). Participants freely explored the app while I observed in-session, followed by a post-test Google Form survey.
+The `Conceptual Process` is the set of actions, activities and research that was done when starting this project.
 
-#### Key Insights
+### Ideation
 
-![User Testing](assets/userTesting/UserTesting.png)
+The concept for AscendAI was born from a common frustration in rock climbing: needing to ask others for help identifying which holds belong to a specific route. The idea focused on creating an AI-powered solution that could automatically detect holds by color and provide grade estimations, making climbing more accessible and independent.
 
-One of the biggest frustrations surrounding rock climbing is needing to ask others for help identifying holds. Every user felt the app was successful in solving this pain.
+Key ideation points:
 
-The least clear screen to use was the Scan a Route screen, the rest of the app was intuitive and structured. Users felt the app was either totally or somewhat successful in clarifying what holds were legal in a route.
+- Color-based hold detection from photos
+- Automatic route annotation with bounding boxes
+- AI-powered grade estimation with reasoning
+- Personal route library for tracking progress
+- Clean, intuitive mobile interface
 
-Key insights: Either an onboarding mode to clarify/demonstrate the scan screen is required or the UI must be updated to better reflect the desired behavior.
+### Wireframes
 
----
+Wireframes were created to map out the user flow and interface design. The focus was on simplicity and ease of use, ensuring that users could quickly scan routes, view results, and manage their route library with minimal effort.
 
-## Highlights & Challenges
+### User-flow
 
-### Highlights
+The user flow was designed to be straightforward:
 
-- Robust multipart/form-data handling, long-running timeouts (up to 180s)
-- Precise tap mapping for letterboxed images
-- Clean separation of concerns: services/hooks/UI
-- Full persistence: Storage for images, Firestore for metadata
+1. User creates an account or logs in via Firebase Authentication
+2. User navigates to the Scan screen and takes or selects a photo
+3. User presses and holds on a hold to select its color
+4. App processes the image and detects matching holds
+5. Annotated image is displayed with detected holds
+6. Grade estimation is automatically generated and displayed
+7. User can save the route to their library with optional notes
+8. User can browse, edit, and manage saved routes in Past Routes
+9. User can manage their profile and account settings
 
-### Challenges
+<!-- DEVELOPMENT PROCESS -->
 
-- Fine tuning colour detection
-- 422 errors from mismatched `Content-Type` and body/query formats
-- Client-side timeouts vs server processing time
-- EXIF/rotation issues – solved via minimal image manipulation
+## Development Process
 
----
+The `Development Process` is the technical implementations and functionality done in the frontend and backend of the application.
 
-## Roadmap & Future Implementations
+### Implementation Process
+
+- Made use of **React Native** and **Expo** to implement a cross-platform mobile application.
+
+- **Firebase Authentication** and **Firestore** for user authentication and data persistence.
+
+- **Firebase Storage** for storing route images and profile pictures.
+
+- **FastAPI backend** with computer vision integration for hold detection and grade analysis.
+
+- **Expo Image Picker** and **Expo Image Manipulator** for image capture and processing.
+
+- **TypeScript** for type safety and improved developer experience.
+
+- **React Navigation** for seamless bottom tab navigation and screen transitions.
+
+- **Axios** for robust API communication with multipart/form-data handling and extended timeouts.
+
+#### Highlights
+
+- **Precise Coordinate Mapping**: Successfully implemented accurate tap-to-image coordinate mapping for letterboxed images, ensuring color selection works correctly regardless of image aspect ratio.
+
+- **Robust API Integration**: Implemented reliable multipart/form-data handling with long-running timeouts (up to 180s) to accommodate backend processing time for computer vision operations.
+
+- **Clean Architecture**: Developed a well-structured codebase with clear separation of concerns using services, hooks, and UI components, making the codebase maintainable and scalable.
+
+- **Full Persistence**: Implemented comprehensive data persistence with Firebase Storage for images and Firestore for metadata, ensuring all user data is securely stored and synchronized.
+
+- **Annotated Image Generation**: Successfully integrated backend services to generate annotated images with bounding boxes, providing clear visual feedback of detected holds.
+
+#### Challenges
+
+- **Color Detection Fine-Tuning**: Fine-tuning color detection to accurately identify holds while filtering out similar colors in the background required extensive testing and parameter adjustment.
+
+- **Content-Type Mismatches**: Resolved 422 errors from mismatched `Content-Type` headers and body/query parameter formats, requiring careful API request configuration.
+
+- **Client-Side Timeouts**: Balancing client-side timeout settings with server processing time for computer vision operations required careful configuration to prevent premature timeouts while maintaining responsiveness.
+
+- **EXIF/Rotation Issues**: Solved image rotation and EXIF orientation issues through minimal image manipulation using Expo Image Manipulator, ensuring consistent image processing across devices.
+
+### Reviews & Testing
+
+#### Feedback from Reviews
+
+`User Testing` was conducted through moderated observational exploratory usability tests with unstructured tasks. Participants freely explored the app while being observed, followed by post-test surveys.
+
+Key feedback:
+
+- **Pain Point Resolution**: Every user felt the app was successful in solving the pain point of needing to ask others for help identifying holds.
+
+- **Scan Screen Clarity**: The least clear screen to use was the Scan a Route screen. Users felt the app was either totally or somewhat successful in clarifying what holds were legal in a route.
+
+- **Intuitive Design**: The rest of the app was intuitive and well-structured, with users finding navigation and route management straightforward.
+
+- **Improvement Areas**: Key insight identified that either an onboarding mode to clarify/demonstrate the scan screen is required, or the UI must be updated to better reflect the desired behavior.
+
+#### Unit Tests
+
+`Unit Tests` are currently not implemented. Future plans include Jest + React Native Testing Library for:
+
+- Route detection API interactions
+- Image coordinate mapping calculations
+- Firebase service operations (mocked)
+- Grade estimation data processing
+
+### Future Implementation
+
+- **Video Walkthroughs**: In-app guidance and video tutorials to help users understand the scanning process.
+
+- **Advanced Color Filtering**: Tolerance controls for color detection to fine-tune hold identification.
+
+- **Re-analyze Grades**: Ability to re-analyze grade for saved routes with updated AI models.
+
+- **Batch Scans**: Support for scanning multiple routes from albums or batch processing.
+
+- **Offline Caching**: Cache recent routes for offline access and improved performance.
+
+- **Social Features**: Social sharing and community boards for route sharing and discussion.
+
+- **Advanced Analytics**: More robust analytics including most common grades, gym trends, and personal climbing statistics.
+
+<!-- MOCKUPS -->
+
+## Final Outcome
+
+### Mockups
+
+![ScanRouteMockup][image2]
+
+<br>
+
+![GradeReadingMockup][image3]
+
+<br>
+
+![PastRoutesMockup][image4]
+
+<br>
+
+![ProfileMockup][image5]
+
+<!-- VIDEO DEMONSTRATION -->
+
+### Video Demonstration
+
+To see a run through of the application, click below:
+
+[View Demonstration](https://drive.google.com/file/d/12Mv9FZuAK4SjZkUlvpzggjBInWlw0bGV/view?usp=sharing)
+
+<!-- CONCLUSION -->
+
+## Conclusion
+
+AscendAI successfully delivers a modern, intuitive solution for climbing route identification through computer vision and AI. The app combines clean design with robust backend functionality, providing boulderers with an independent tool to identify routes and estimate grades. The integration of React Native, FastAPI, Firebase, and computer vision technologies creates a reliable and scalable platform for climbing assistance.
+
+<!-- ROADMAP -->
+
+## Roadmap
+
+See the [open issues](https://github.com/KurtSchwimmbacher/AscendAI/issues) for a list of proposed features (and known issues).
+
+Planned features include:
 
 - Video walkthroughs and in-app guidance
-- Advanced colour filtering tolerance controls
-- Re-analyse grade for saved routes
+- Advanced color filtering tolerance controls
+- Re-analyze grade for saved routes
 - Batch scans and albums
 - Offline caching of recent routes
 - Social sharing and community boards
 - More robust analytics (most common grades, gym trends)
 
----
+<!-- CONTRIBUTING -->
 
-## Contributing & Licenses
+## Contributing
 
-> This project was developed as part of a university course requirement and is currently private and non-commercial.  
-> No external contributions are being accepted at this time.
+This project was developed as part of a university course requirement and is currently private and non-commercial. No external contributions are being accepted at this time.
 
----
+<!-- AUTHORS -->
 
-## Authors & Contact Info
+## Authors
 
-Built with ❤️ by:
+- **Kurt Schwimmbacher** - [KurtSchwimmbacher](https://github.com/KurtSchwimmbacher)
 
-- **Kurt Schwimmbacher**
+<!-- LICENSE -->
 
----
+## License
+
+Distributed under the MIT License. See License for details
+
+<!-- CONTACT -->
+
+## Contact
+
+- **Kurt Schwimmbacher** - [@kurts.portfolio](https://www.instagram.com/kurts.portfolio/)
+
+- **Project Link** - https://github.com/KurtSchwimmbacher/AscendAI
+
+- **Backend Repository** - https://github.com/KurtSchwimmbacher/AscendBackend
+
+<!-- ACKNOWLEDGEMENTS -->
 
 ## Acknowledgements
 
-- React Native & Expo teams for cross-platform tooling
-- FastAPI community for excellent async Python APIs
-- Firebase for rapid auth, storage, and database capabilities
-- Open-source CV tooling and YOLO ecosystems for hold-detection foundations
-- **Open Window Lecturer Armand Pretorius** for providing feedback and insight
+- [React Native](https://reactnative.dev/) - For providing the foundation to build cross-platform mobile applications
+- [Expo](https://expo.dev/) - For simplifying the development and testing process
+- [Firebase](https://firebase.google.com/) - For authentication, Firestore, and storage support
+- [FastAPI](https://fastapi.tiangolo.com/) - For excellent async Python API framework
+- [YOLO](https://github.com/ultralytics/ultralytics) - For computer vision and hold detection capabilities
+- Open-source contributors – whose libraries, guides, and shared knowledge made development faster and more enjoyable
+- **Open Window Lecturer Armand Pretorius** - For providing feedback and insight
+
+<!-- MARKDOWN LINKS & IMAGES -->
+
+[image1]: ./assets/banner/Frontend_Banner.png
+[image2]: ./assets/mockups/Mockup_1.png
+[image3]: ./assets/mockups/Mockup_4.png
+[image4]: ./assets/mockups/Mockup_3.png
+[image5]: ./assets/mockups/Mockup_5.png
+
+<!-- Refer to https://shields.io/ for more information and options about the shield links at the top of the ReadMe file -->
+
+[instagram-shield]: https://img.shields.io/badge/-Instagram-black.svg?style=flat-square&logo=instagram&colorB=555
+[instagram-url]: https://www.instagram.com/kurts.portfolio/
